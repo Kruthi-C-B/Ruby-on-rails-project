@@ -1,0 +1,46 @@
+<h1><%= current_user.tenant.name %> — Admin Dashboard</h1>
+<p><strong>Address:</strong> <%= current_user.tenant.address %></p>
+<p>
+  <%= link_to "Edit Store Profile", edit_tenant_path %> | 
+  <%# <%= button_to "Log Out", logout_path, method: :delete, style: "display: inline;" %> 
+</p>
+
+<hr>
+
+<h2>Store Product Inventory</h2>
+
+<%= link_to "+ Add Product from Catalog", new_product_listing_path, style: "background: green; color: white; padding: 8px 12px; text-decoration: none; border-radius: 4px;" %>
+
+<br><br>
+
+<table border="1" cellpadding="10" cellspacing="0">
+  <thead>
+    <tr>
+      <th>Product Name</th>
+      <th>Category</th>
+      <th>Price</th>
+      <th>Stock Quantity</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if @listings.any? %>
+      <% @listings.each do |listing| %>
+        <tr>
+          <td><%= listing.product.name %></td>
+          <td><%= listing.product.category.name %></td>
+          <td>$<%= sprintf('%.2f', listing.price) %></td>
+          <td><%= listing.stock_quantity %></td>
+          <td>
+            <%= link_to "Edit Price/Stock", edit_product_listing_path(listing) %> |
+            <%= button_to "Remove", product_listing_path(listing), method: :delete, data: { confirm: "Are you sure?" }, style: "color: red; background: none; border: none; cursor: pointer; display: inline;" %>
+          </td>
+        </tr>
+      <% end %>
+    <% else %>
+      <tr>
+        <td colspan="5">No products listed in your store yet. Click "+ Add Product from Catalog" above.</td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

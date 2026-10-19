@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  tenant: one
+  shop: one
+  variant: one
+  sku: MyString
+  price: 9.99
+  stock_quantity: 1
+  status: MyString
+  price_updated_at: 2026-10-16 09:51:27
+
+two:
+  tenant: two
+  shop: two
+  variant: two
+  sku: MyString
+  price: 9.99
+  stock_quantity: 1
+  status: MyString
+  price_updated_at: 2026-10-16 09:51:27

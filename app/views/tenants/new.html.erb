@@ -1,0 +1,36 @@
+<h2>Create Store Profile</h2>
+
+<%= form_with model: @tenant, url: tenant_path, local: true do |f| %>
+  <% if @tenant.errors.any? %>
+    <div style="color: red;">
+      <ul>
+        <% @tenant.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, "Store Name" %><br>
+    <%= f.text_field :name, required: true %>
+  </div>
+
+  <br>
+
+  <div>
+    <%= f.label :slug, "URL Slug (e.g. techhub-downtown)" %><br>
+    <%= f.text_field :slug, required: true %>
+  </div>
+
+  <br>
+
+  <div>
+    <%= f.label :address, "Store Address" %><br>
+    <%= f.text_area :address, rows: 3 %>
+  </div>
+
+  <br>
+
+  <%= f.submit "Save Store Profile" %>
+<% end %>

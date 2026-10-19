@@ -1,0 +1,40 @@
+
+
+<h1><%= @product.name %></h1>
+<p><strong>Category:</strong> <%= @product.category.name %></p>
+<p><%= @product.description %></p>
+
+<h2>Cross-Store Price & Stock Comparison</h2>
+
+<% if @listings.any? %>
+  <table border="1" cellpadding="10" cellspacing="0">
+    <thead>
+      <tr>
+        <th>Store Name</th>
+        <th>Store Address</th>
+        <th>Price</th>
+        <th>Stock Quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @listings.each do |listing| %>
+        <tr>
+          <td><strong><%= listing.tenant.name %></strong></td>
+          <td><%= listing.tenant.address || "N/A" %></td>
+          <td>$<%= sprintf('%.2f', listing.price) %></td>
+          <td>
+           <% if listing.stock_quantity == 0 %>
+  <span style="color: #dc3545; font-weight: bold;">Out of Stock</span>
+<% elsif listing.stock_quantity <= 10 %>
+  <span style="color: #fd7e14; font-weight: bold;">Only a few left!</span>
+<% else %>
+  <span style="color: #28a745; font-weight: bold;">In Stock</span>
+<% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% else %>
+  <p>No stores are currently selling this product.</p>
+<% end %>

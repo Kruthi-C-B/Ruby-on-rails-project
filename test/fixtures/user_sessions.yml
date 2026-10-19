@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  token_digest: MyString
+  expires_at: 2026-10-16 09:44:42
+  revoked_at: 2026-10-16 09:44:42
+
+two:
+  user: two
+  token_digest: MyString
+  expires_at: 2026-10-16 09:44:42
+  revoked_at: 2026-10-16 09:44:42

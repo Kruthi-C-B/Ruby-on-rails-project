@@ -1,0 +1,64 @@
+<h2>Add Product to Store Listing</h2>
+
+<%= form_with model: @product_listing, local: true do |f| %>
+  
+  <!-- Error Messages -->
+  <% if @product_listing.errors.any? %>
+    <div style="background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; padding: 12px; border-radius: 4px; margin-bottom: 20px;">
+      <h4 style="margin-top: 0;">Unable to add product:</h4>
+      <ul style="margin-bottom: 0; padding-left: 20px;">
+        <% @product_listing.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <!-- 1. The Category Dropdown -->
+  <div>
+    <%= label_tag :category_id, "1. Select Category" %><br>
+    <%= select_tag :category_id, 
+          options_from_collection_for_select(Category.all, :id, :name, params[:category_id]), 
+          prompt: "Choose a Category...", 
+          onchange: "window.location.href = '#{new_product_listing_path}?category_id=' + this.value" %>
+  </div>
+
+  <br>
+
+  <!-- 2. The Product Dropdown -->
+  <div>
+    <%= f.label :product_id, "2. Select Product from Catalog" %><br>
+    
+    <% if @products.any? %>
+      <!-- Shows if a category is selected and has products -->
+      <%= f.collection_select :product_id, @products, :id, :name, prompt: "Select a product" %>
+    <% else %>
+      <!-- Shows before a category is picked -->
+      <select disabled>
+        <option>Please select a category first...</option>
+      </select>
+    <% end %>
+  </div>
+
+  <br>
+
+  <!-- Price and Stock Details -->
+  <div>
+    <%= f.label :price, "Store Price ($)" %><br>
+    <%= f.number_field :price, step: 0.01, required: true %>
+  </div>
+
+  <br>
+
+  <div>
+    <%= f.label :stock_quantity, "Stock Quantity" %><br>
+    <%= f.number_field :stock_quantity, required: true %>
+  </div>
+
+  <br>
+
+  <%= f.submit "Add to Store" %>
+<% end %>
+
+<br>
+<%= link_to "Cancel", product_listings_path %>

@@ -1,0 +1,32 @@
+<h1>Product Catalog</h1>
+
+<!-- Search and Filter Form -->
+<%= form_with url: products_path, method: :get, local: true do |f| %>
+  <div>
+    <%= f.label :query, "Search Product:" %>
+    <%= f.text_field :query, value: params[:query], placeholder: "e.g. Headphones" %>
+
+    <%= f.label :category_id, "Category:" %>
+    <%= f.select :category_id, options_from_collection_for_select(@categories, :id, :name, params[:category_id]), include_blank: "All Categories" %>
+
+    <%= f.submit "Filter" %>
+  </div>
+<% end %>
+
+<hr>
+
+<!-- Product Cards Grid -->
+<div style="display: flex; gap: 20px; flex-wrap: wrap;">
+  <% if @products.any? %>
+    <% @products.each do |product| %>
+      <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; width: 250px;">
+        <h3><%= link_to product.name, product_path(product) %></h3>
+        <p><strong>Category:</strong> <%= product.category.name %></p>
+        <p><%= product.description %></p>
+        <%= link_to "Compare Prices", product_path(product), style: "background: #007bff; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px;" %>
+      </div>
+    <% end %>
+  <% else %>
+    <p>No products found in the catalog.</p>
+  <% end %>
+</div>

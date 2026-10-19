@@ -1,0 +1,32 @@
+<h2>Edit Listing for <%= @listing.product.name %></h2>
+
+<%= form_with model: @listing, local: true do |f| %>
+  <% if @listing.errors.any? %>
+    <div style="color: red;">
+      <ul>
+        <% @listing.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :price, "Store Price ($)" %><br>
+    <%= f.number_field :price, step: 0.01, required: true %>
+  </div>
+
+  <br>
+
+  <div>
+    <%= f.label :stock_quantity, "Stock Quantity" %><br>
+    <%= f.number_field :stock_quantity, required: true %>
+  </div>
+
+  <br>
+
+  <%= f.submit "Update Listing" %>
+<% end %>
+
+<br>
+<%= link_to "Cancel", product_listings_path %>

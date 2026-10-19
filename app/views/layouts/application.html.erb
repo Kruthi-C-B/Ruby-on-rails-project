@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Local Find" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Local Find">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px;">
+    <!-- Top Navigation Header -->
+    <header style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #ddd;">
+      <!-- Left Side: Brand Logo + Conditional Back Link -->
+      <div style="display: flex; align-items: center; gap: 20px;">
+        <div style="font-size: 22px; font-weight: bold;">
+          <%= link_to "LocalFind", root_path, style: "text-decoration: none; color: #333;" %>
+        </div>
+        <% unless current_page?(root_path) %>
+          <%= link_to "← Back to Catalog", root_path, style: "color: #6f42c1; text-decoration: underline;" %>
+        <% end %>
+      </div>
+
+      <!-- Right Side: Navigation & Actions -->
+      <div>
+        <% if logged_in? %>
+          <span style="margin-right: 15px;">Welcome, <strong><%= current_user.email %></strong></span>
+          
+          <!-- Show Store Dashboard ONLY if the user actually owns a store profile -->
+          <% if current_user.tenant.present? %>
+            <%= link_to "My Store Dashboard", product_listings_path, style: "margin-right: 15px; text-decoration: none; color: #007bff; font-weight: 500;" %>
+          <% end %>
+
+          <%= button_to "Log Out", logout_path, method: :delete, style: "background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; display: inline-block;" %>
+        <% else %>
+          <%= link_to "Log In", login_path, style: "background: #f8f9fa; color: #333; border: 1px solid #ccc; padding: 8px 14px; text-decoration: none; border-radius: 4px; margin-right: 10px;" %>
+          <%# <%= link_to "Sign Up as Admin", signup_path, style: "background: #28a745; color: white; padding: 8px 14px; text-decoration: none; border-radius: 4px;" %>
+        <% end %>
+      </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <% if notice %>
+      <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        <%= notice %>
+      </div>
+    <% end %>
+
+    <% if alert %>
+      <div style="background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+        <%= alert %>
+      </div>
+    <% end %>
+
+    <!-- Main Page Content -->
+    <%= yield %>
+  </body>
+</html>
