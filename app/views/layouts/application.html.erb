@@ -15,8 +15,9 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
-    <%= javascript_importmap_tags %>
+     <%= stylesheet_link_tag :app %>
+    <%= stylesheet_pack_tag "application" %>
+    <%= javascript_pack_tag "application" %>
   </head>
 
   <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px;">
@@ -39,8 +40,9 @@
           
           <!-- Show Store Dashboard ONLY if the user actually owns a store profile -->
           <% if current_user.tenant.present? %>
-            <%= link_to "My Store Dashboard", product_listings_path, style: "margin-right: 15px; text-decoration: none; color: #007bff; font-weight: 500;" %>
-          <% end %>
+            <%# <%= link_to "My Store Dashboard", product_listings_path, style: "margin-right: 15px; text-decoration: none; color: #007bff; font-weight: 500;" %>
+            <%= link_to "My Store Dashboard", "/product_listings", style: "margin-right: 15px; text-decoration: none; color: #007bff; font-weight: 500;" %>
+          <% end %> %>
 
           <%= button_to "Log Out", logout_path, method: :delete, style: "background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; display: inline-block;" %>
         <% else %>

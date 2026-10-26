@@ -1,0 +1,43 @@
+{
+  "packageManager": "npm@11.19.1",
+  "name": "app",
+  "private": true,
+  "version": "0.1.0",
+  "browserslist": [
+    "defaults"
+  ],
+  "dependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-runtime": "^7.29.7",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@babel/runtime": "^7.29.10",
+    "babel-loader": "^10.1.1",
+    "compression-webpack-plugin": "^12.0.0",
+    "css-loader": "^7.1.5",
+    "mini-css-extract-plugin": "^2.10.2",
+    "react": "^18.3.1",
+    "react_ujs": "^3.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^5.3.4",
+    "sass": "^1.106.1",
+    "sass-loader": "^16.0.8",
+    "shakapacker": "10.3.2",
+    "style-loader": "^4.0.0",
+    "terser-webpack-plugin": "^5.6.1",
+    "webpack": "^5.112.0",
+    "webpack-assets-manifest": "^6.5.4",
+    "webpack-cli": "^6.0.1",
+    "webpack-merge": "^6.0.1",
+    "webpack-subresource-integrity": "^5.1.0"
+  },
+  "devDependencies": {
+    "webpack-dev-server": "^6.1.0"
+  },
+  "babel": {
+    "presets": [
+      "./node_modules/shakapacker/package/babel/preset.js",
+      "@babel/preset-react"
+    ]
+  }
+}

@@ -44,4 +44,22 @@ catalog_data.each do |category_name, products_data|
   end
 end
 
+
 puts "Categories and Products created successfully!"
+# 4. A demo store with a few listings, so the catalog has something to show
+owner = User.find_or_create_by!(email: "owner@localfind.com") do |user|
+  user.password = "secret123"
+  user.password_confirmation = "secret123"
+end
+store = Tenant.find_or_create_by!(user: owner) do |tenant|
+  tenant.name = "Corner Store"
+  tenant.slug = "corner-store"
+  tenant.address = "12 Main Street"
+end
+[ [ "Wireless Headphones", 59.99, 25 ], [ "Ceramic Coffee Mug", 8.5, 4 ], [ "Almond Milk", 3.25, 0 ] ].each do |name, price, stock|
+  ProductListing.find_or_create_by!(tenant: store, product: Product.find_by!(name: name)) do |listing|
+    listing.price = price
+    listing.stock_quantity = stock
+  end
+end
+puts "Demo store created: owner@localfind.com / secret123"

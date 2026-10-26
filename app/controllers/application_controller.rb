@@ -1,8 +1,11 @@
 class ApplicationController < ActionController::Base
   helper_method :current_user, :logged_in?, :current_tenant
-
+  before_action :set_paper_trail_whodunnit
   private
 
+  def user_for_paper_trail
+   current_user&.id
+  end
   def current_user
     @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
   end

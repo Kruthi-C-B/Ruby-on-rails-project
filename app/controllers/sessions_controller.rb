@@ -3,23 +3,61 @@ class SessionsController < ApplicationController
 
   def create
     user = User.find_by(email: params[:email])
-    if user&.authenticate(params[:password])
+
+    if user && user.authenticate(params[:password])
+      # --- AUDIT: SUCCESSFUL LOGIN ---
+      LoginAudit.create!(
+        user: user,
+        email: params[:email],
+        ip_address: request.remote_ip,
+        status: "success"
+      )
+
       session[:user_id] = user.id
 
-      # If logging in via 'Admin Login' OR user already owns a tenant store
-      if params[:admin_login] == "true" || user.tenant.present?
+      # 1. Platform Owner (Super Admin) Logic
+      if user.is_admin?
+        redirect_to "/admin/dashboard", notice: "Welcome to the Platform Admin Dashboard!"
+
+      # 2. Existing Store Owner (Tenant) Logic
+      elsif params[:admin_login] == "true" || user.tenant.present?
         if user.tenant.present?
-          redirect_to product_listings_path, notice: "Welcome back to your store dashboard!"
+          redirect_to root_path, notice: "Welcome back to your store dashboard!"
         else
           redirect_to new_tenant_path, notice: "Please set up your store profile."
         end
+
+      # 3. Regular Shopper Logic
       else
-        # Regular user / shopper login
         redirect_to root_path, notice: "Logged in successfully!"
       end
-    else
+
+    elsif user
+      # --- AUDIT: FAILED LOGIN (Wrong Password) ---
+      LoginAudit.create!(
+        user: user,
+        email: params[:email],
+        ip_address: request.remote_ip,
+        status: "failure",
+        failure_reason: "invalid_password"
+      )
+
       flash.now[:alert] = "Invalid email or password."
       render :new, status: :unprocessable_entity
+
+    else
+      # --- AUDIT: FAILED LOGIN (User Not Found) ---
+      LoginAttempt.create!(
+    email: params[:email],
+    ip_address: request.remote_ip,
+    user_agent: request.user_agent,
+    status: "failure",
+    failure_reason: "user_not_found",
+    login_timestamp: Time.current
+  )
+
+      flash.now[:alert] = "Invalid email or password."
+  render :new, status: :unprocessable_entity
     end
   end
 
