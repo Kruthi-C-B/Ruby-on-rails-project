@@ -70,3 +70,4 @@ gem "shakapacker", "~> 10.3"
 gem "react-rails", "~> 3.3"
 
 gem "paper_trail"
+gem "ros-apartment", require: "apartment"

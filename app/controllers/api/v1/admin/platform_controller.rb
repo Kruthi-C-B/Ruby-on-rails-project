@@ -1,6 +1,8 @@
 class Api::V1::Admin::PlatformController < ApplicationController
   before_action :require_admin
 
+  # def produc
+
   def users
     # Returns all users and whether they have a store or are an admin
     users = User.includes(:tenant).all.map do |user|

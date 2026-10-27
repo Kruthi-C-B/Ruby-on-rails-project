@@ -14,7 +14,7 @@ Rails.application.routes.draw do
 
       namespace :admin do
         resources :categories, only: [ :create ]
-        resources :products, only: [ :create ]
+        resources :products, only: [ :index, :create ]
         resources :discounts, only: [ :create ]
         resources :login_audits, only: [ :index ]
         get :cart_metrics, to: "cart_metrics#index"
