@@ -15,9 +15,11 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-     <%= stylesheet_link_tag :app %>
-    <%= stylesheet_pack_tag "application" %>
-    <%= javascript_pack_tag "application" %>
+    <%= stylesheet_link_tag :app %>
+    <% if %w[authentication user-application].include?(@mfe_entry || "user-application") %>
+      <%= stylesheet_pack_tag(@mfe_entry || "user-application") %>
+    <% end %>
+    <%= javascript_pack_tag(@mfe_entry || "user-application") %>
   </head>
 
   <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px;">
