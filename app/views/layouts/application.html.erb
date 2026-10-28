@@ -42,7 +42,7 @@
           <% if current_user.tenant.present? %>
             <%# <%= link_to "My Store Dashboard", product_listings_path, style: "margin-right: 15px; text-decoration: none; color: #007bff; font-weight: 500;" %>
             <%= link_to "My Store Dashboard", "/product_listings", style: "margin-right: 15px; text-decoration: none; color: #007bff; font-weight: 500;" %>
-          <% end %> %>
+          <% end %>
 
           <%= button_to "Log Out", logout_path, method: :delete, style: "background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; display: inline-block;" %>
         <% else %>

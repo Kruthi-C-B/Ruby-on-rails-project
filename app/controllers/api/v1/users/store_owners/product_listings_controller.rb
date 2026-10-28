@@ -10,31 +10,86 @@ module Api
           rescue_from ActiveRecord::RecordNotUnique, with: :handle_duplicate_listing
 
           def index
-            listings = current_user.tenant.product_listings.includes(product: :category)
-            render json: listings.as_json(include: { product: { include: :category } }), status: :ok
+            tenant = current_user.tenant
+            listings = TenantDatabase.switch(tenant) do
+              ProductListing.includes(product: :category).to_a
+            end
+            references = ListingReference.where(tenant: tenant).index_by(&:tenant_listing_id)
+
+            render json: listings.map { |listing|
+              serialize_listing(listing, references.fetch(listing.id))
+            }, status: :ok
           end
 
           def create
-            listing = current_user.tenant.product_listings.build(listing_params)
-            if listing.save
-              render json: listing.as_json(include: { product: { include: :category } }), status: :created
+            tenant = current_user.tenant
+            listing, errors = TenantDatabase.switch(tenant) do
+              listing = ProductListing.new(listing_params)
+              if listing.save
+                reference = ListingReference.find_or_initialize_by(
+                  tenant: tenant,
+                  product_id: listing.product_id
+                )
+                reference.sync_from_listing!(listing)
+                [ listing, nil ]
+              else
+                [ nil, listing.errors.full_messages ]
+              end
+            end
+
+            if listing
+              reference = ListingReference.find_by!(tenant: tenant, tenant_listing_id: listing.id)
+              render json: serialize_listing(listing, reference), status: :created
             else
-              render json: { errors: listing.errors.full_messages }, status: :unprocessable_entity
+              render json: { errors: errors }, status: :unprocessable_entity
             end
           end
 
           def update
-            listing = current_user.tenant.product_listings.find(params[:id])
-            if listing.update(listing_params)
-              render json: listing.as_json(include: { product: { include: :category } }), status: :ok
+            tenant = current_user.tenant
+            listing, errors = TenantDatabase.switch(tenant) do
+              listing = ProductListing.find(params[:id])
+              if listing.update(listing_params)
+                ListingReference.find_by!(tenant: tenant, tenant_listing_id: listing.id)
+                  .sync_from_listing!(listing)
+                [ listing, nil ]
+              else
+                [ nil, listing.errors.full_messages ]
+              end
+            end
+
+            if listing
+              reference = ListingReference.find_by!(tenant: tenant, tenant_listing_id: listing.id)
+              render json: serialize_listing(listing, reference), status: :ok
             else
-              render json: { errors: listing.errors.full_messages }, status: :unprocessable_entity
+              render json: { errors: errors }, status: :unprocessable_entity
             end
           end
 
           def destroy
-            listing = current_user.tenant.product_listings.find(params[:id])
-            listing.destroy
+            tenant = current_user.tenant
+            reference = ListingReference.find_by!(tenant: tenant, tenant_listing_id: params[:id])
+            if reference.cart_items.exists?
+              return render json: {
+                errors: [ "A product listing referenced by a cart or purchase cannot be removed." ]
+              }, status: :conflict
+            end
+
+            deleted = TenantDatabase.switch(tenant) do
+              listing = ProductListing.find(params[:id])
+              if PurchaseHistory.exists?(product_listing_id: listing.id)
+                next false
+              end
+
+              listing.destroy!
+              true
+            end
+
+            return render json: {
+              errors: [ "A product listing with purchase history cannot be removed." ]
+            }, status: :conflict unless deleted
+
+            reference.destroy!
             render json: { message: "Listing removed" }, status: :ok
           end
 
@@ -89,35 +144,27 @@ module Api
             return render json: { error: "Store profile required" },
                           status: :forbidden unless current_user&.tenant
 
-            listing_ids = current_user.tenant.product_listings.pluck(:id)
-
-            purchased_items = CartItem
-              .joins(:cart)
-              .includes(cart: :user, product_listing: :product)
-              .where(product_listing_id: listing_ids, carts: { status: "ordered" })
-              .order("carts.updated_at DESC")
-
-            total_ordered = purchased_items
-              .distinct
-              .count(:cart_id)
-
-            total_items = purchased_items.sum(&:quantity)
+            purchases = TenantDatabase.switch(current_user.tenant) do
+              PurchaseHistory.where(status: "successful").order(purchased_at: :desc).to_a
+            end
+            products = Product.where(id: purchases.map(&:product_id).uniq).index_by(&:id)
+            purchaser_emails = User.where(id: purchases.map(&:user_id).uniq).pluck(:id, :email).to_h
 
             render json: {
               metrics: {
-                total_ordered: total_ordered,
-                total_items: total_items
+                total_ordered: purchases.map(&:purchase_reference).uniq.size,
+                total_items: purchases.sum(&:quantity)
               },
-              purchase_history: purchased_items.map do |item|
+              purchase_history: purchases.map do |purchase|
                 {
-                   purchaser_email: item.cart.user&.email,
-                  id: item.id,
-                  date: item.cart.updated_at,
-                  cart_id: item.cart_id,
-                  product_name: item.product_listing.product.name,
-                  quantity: item.quantity,
-                  unit_price: item.unit_price,
-                  total: item.unit_price * item.quantity
+                  purchaser_email: purchaser_emails[purchase.user_id],
+                  id: purchase.id,
+                  date: purchase.purchased_at,
+                  cart_id: purchase.purchase_reference,
+                  product_name: products[purchase.product_id]&.name || "Deleted product",
+                  quantity: purchase.quantity,
+                  unit_price: purchase.unit_price,
+                  total: purchase.total_price
                 }
               end
             }, status: :ok
@@ -132,6 +179,12 @@ module Api
 
           def listing_params
             params.require(:product_listing).permit(:product_id, :price, :stock_quantity)
+          end
+
+          def serialize_listing(listing, reference)
+            listing.as_json(include: { product: { include: :category } }).merge(
+              listing_reference_id: reference.id
+            )
           end
 
           def handle_duplicate_listing

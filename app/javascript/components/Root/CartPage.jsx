@@ -5,6 +5,7 @@ export default function CartPage() {
   const [cart, setCart] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cartError, setCartError] = useState("");
   const [discountCode, setDiscountCode] = useState("");
   const [discountMessage, setDiscountMessage] = useState("");
   const [availableDiscounts, setAvailableDiscounts] = useState([]);
@@ -20,9 +21,14 @@ export default function CartPage() {
     setLoading(true);
     try {
       const data = await fetchCart();
+      console.log("Cart items:", data.items);
+      console.log("Cart item IDs:", data.items?.map((item) => item.id));
+
       setCart(data);
+      setCartError("");
     } catch (error) {
       console.error("Failed to load cart", error);
+      setCartError(error.message || "Unable to load your cart. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -31,6 +37,20 @@ export default function CartPage() {
   const loadOrders = async () => {
     try {
       const data = await fetchGet("/api/v1/users/cart/orders");
+
+      console.log("Orders:", data);
+
+    console.log(
+      "Past order item IDs:",
+      data.flatMap((order) =>
+        (order.cart_items || []).map((item) => ({
+          orderId: order.id,
+          itemId: item.id,
+        }))
+      )
+    );
+
+
       setOrders(data);
     } catch (error) {
       console.error("Failed to load orders", error);
@@ -73,7 +93,9 @@ export default function CartPage() {
     <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
       <h2>Your Shopping Cart</h2>
       
-      {!cart || !cart.items || cart.items.length === 0 ? (
+      {cartError ? (
+        <p role="alert" style={{ padding: "20px 0", color: "#b00020" }}>{cartError}</p>
+      ) : !cart || !cart.items || cart.items.length === 0 ? (
         <p style={{ padding: "20px 0", fontStyle: "italic", color: "#666" }}>Your cart is empty.</p>
       ) : (
         <>
@@ -122,8 +144,8 @@ export default function CartPage() {
             
             {cart.discount_percentage && (
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px", color: "green" }}>
-                <span>Discount Applied:</span>
-                <span>{parseFloat(cart.discount_percentage)}% off</span>
+              <span>Discount Applied ({parseFloat(cart.discount_percentage)}%):</span>
+              <span>-${parseFloat(cart.discount_amount).toFixed(2)}</span>
               </div>
             )}
             
@@ -177,7 +199,9 @@ export default function CartPage() {
                   <tr style={{ borderBottom: "1px solid #ccc" }}>
                     <th style={{ paddingBottom: "8px" }}>Product</th>
                     <th style={{ paddingBottom: "8px" }}>Qty</th>
-                    <th style={{ paddingBottom: "8px" }}>Price</th>
+                    <th style={{ paddingBottom: "8px" }}>Unit Price</th>
+                    <th style={{ paddingBottom: "8px" }}>Discount</th>
+                    <th style={{ paddingBottom: "8px" }}>Line Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -186,13 +210,18 @@ export default function CartPage() {
                       <td style={{ padding: "8px 0" }}>{item.product_listing?.product?.name || "Unknown Product"}</td>
                       <td>{item.quantity}</td>
                       <td>${parseFloat(item.unit_price).toFixed(2)}</td>
+                      <td>-${parseFloat(item.discount_amount || 0).toFixed(2)}</td>
+                      <td>${parseFloat(item.total_price || 0).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
 
-              <div style={{ textAlign: "right", marginTop: "15px", fontWeight: "bold", fontSize: "1.1em" }}>
-                Total Paid: ${parseFloat(order.total_price || 0).toFixed(2)}
+              <div style={{ textAlign: "right", marginTop: "15px", fontSize: "1.1em" }}>
+                {Number(order.discount_amount) > 0 && (
+                  <p style={{ color: "green" }}>Discount: -${parseFloat(order.discount_amount).toFixed(2)}</p>
+                )}
+                <strong>Total Paid: ${parseFloat(order.total_price || 0).toFixed(2)}</strong>
               </div>
             </div>
           ))}

@@ -1,0 +1,194 @@
+{
+  "simplecov_history": {
+    "format_version": 1,
+    "entries": [
+      {
+        "created_at": "2026-10-28T06:36:12Z",
+        "branch": "before_apartment",
+        "commit": "627156efb73f23d632aee990d960e1c8f2bc3782",
+        "totals": {
+          "line": 96.8
+        },
+        "groups": {},
+        "files": {
+          "app/helpers/application_helper.rb": {
+            "line": 100.0
+          },
+          "app/models/application_record.rb": {
+            "line": 100.0
+          },
+          "app/models/cart.rb": {
+            "line": 100.0
+          },
+          "app/models/cart_item.rb": {
+            "line": 100.0
+          },
+          "app/models/category.rb": {
+            "line": 100.0
+          },
+          "app/models/discount.rb": {
+            "line": 100.0
+          },
+          "app/models/listing_reference.rb": {
+            "line": 76.92
+          },
+          "app/models/login_attempt.rb": {
+            "line": 100.0
+          },
+          "app/models/login_audit.rb": {
+            "line": 100.0
+          },
+          "app/models/product.rb": {
+            "line": 100.0
+          },
+          "app/models/tenant.rb": {
+            "line": 100.0
+          },
+          "app/models/user.rb": {
+            "line": 100.0
+          },
+          "config/application.rb": {
+            "line": 100.0
+          },
+          "config/boot.rb": {
+            "line": 100.0
+          },
+          "config/environment.rb": {
+            "line": 100.0
+          },
+          "config/environments/test.rb": {
+            "line": 100.0
+          },
+          "config/initializers/apartment.rb": {
+            "line": 100.0
+          },
+          "config/initializers/assets.rb": {
+            "line": 100.0
+          },
+          "config/initializers/content_security_policy.rb": {
+            "line": 100.0
+          },
+          "config/initializers/filter_parameter_logging.rb": {
+            "line": 100.0
+          },
+          "config/initializers/inflections.rb": {
+            "line": 100.0
+          }
+        }
+      },
+      {
+        "created_at": "2026-10-28T06:37:53Z",
+        "branch": "before_apartment",
+        "commit": "627156efb73f23d632aee990d960e1c8f2bc3782",
+        "totals": {
+          "line": 89.45
+        },
+        "groups": {},
+        "files": {
+          "app/controllers/api/v1/admin/base_controller.rb": {
+            "line": 87.5
+          },
+          "app/controllers/api/v1/admin/categories_controller.rb": {
+            "line": 81.81
+          },
+          "app/controllers/api/v1/admin/discounts_controller.rb": {
+            "line": 76.0
+          },
+          "app/controllers/api/v1/admin/products_controller.rb": {
+            "line": 62.5
+          },
+          "app/controllers/application_controller.rb": {
+            "line": 57.14
+          },
+          "app/controllers/sessions_controller.rb": {
+            "line": 41.66
+          },
+          "app/helpers/application_helper.rb": {
+            "line": 100.0
+          },
+          "app/models/application_record.rb": {
+            "line": 100.0
+          },
+          "app/models/cart.rb": {
+            "line": 100.0
+          },
+          "app/models/cart_item.rb": {
+            "line": 100.0
+          },
+          "app/models/category.rb": {
+            "line": 100.0
+          },
+          "app/models/discount.rb": {
+            "line": 100.0
+          },
+          "app/models/listing_reference.rb": {
+            "line": 100.0
+          },
+          "app/models/login_attempt.rb": {
+            "line": 100.0
+          },
+          "app/models/login_audit.rb": {
+            "line": 100.0
+          },
+          "app/models/product.rb": {
+            "line": 100.0
+          },
+          "app/models/product_listing.rb": {
+            "line": 100.0
+          },
+          "app/models/purchase_history.rb": {
+            "line": 100.0
+          },
+          "app/models/tenant.rb": {
+            "line": 100.0
+          },
+          "app/models/user.rb": {
+            "line": 100.0
+          },
+          "app/services/checkout_service.rb": {
+            "line": 89.65
+          },
+          "app/services/discount_allocator.rb": {
+            "line": 95.45
+          },
+          "app/services/tenant_database.rb": {
+            "line": 100.0
+          },
+          "config/application.rb": {
+            "line": 100.0
+          },
+          "config/boot.rb": {
+            "line": 100.0
+          },
+          "config/environment.rb": {
+            "line": 100.0
+          },
+          "config/environments/test.rb": {
+            "line": 100.0
+          },
+          "config/initializers/apartment.rb": {
+            "line": 100.0
+          },
+          "config/initializers/assets.rb": {
+            "line": 100.0
+          },
+          "config/initializers/content_security_policy.rb": {
+            "line": 100.0
+          },
+          "config/initializers/filter_parameter_logging.rb": {
+            "line": 100.0
+          },
+          "config/initializers/inflections.rb": {
+            "line": 100.0
+          },
+          "config/routes.rb": {
+            "line": 97.36
+          },
+          "db/schema.rb": {
+            "line": 100.0
+          }
+        }
+      }
+    ]
+  }
+}

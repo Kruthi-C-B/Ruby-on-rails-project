@@ -13,6 +13,7 @@ export default function AdminDashboard() {
 
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
+  const [editingRecord, setEditingRecord] = useState(null);
 
   const loadData = useCallback(async (tab) => {
     const endpoints = {
@@ -64,6 +65,38 @@ export default function AdminDashboard() {
         text: err.message || `Failed to create ${endpoint}.`,
       });
     }
+  };
+
+  const handleUpdate = async (e, endpoint, payload, tab) => {
+    e.preventDefault();
+    setMessage(null);
+
+    try {
+      await fetchRequest(`/api/v1/admin/${endpoint}/${editingRecord.id}`, "PATCH", payload);
+      setEditingRecord(null);
+      setMessage({ type: "success", text: `Successfully updated ${endpoint.slice(0, -1)}.` });
+      await loadData(tab);
+    } catch (err) {
+      setMessage({ type: "error", text: err.message || `Failed to update ${endpoint}.` });
+    }
+  };
+
+  const handleDelete = async (endpoint, id, tab, label) => {
+    if (!window.confirm(`Delete this ${label}? This action cannot be undone.`)) return;
+    setMessage(null);
+
+    try {
+      await fetchRequest(`/api/v1/admin/${endpoint}/${id}`, "DELETE");
+      setEditingRecord(null);
+      setMessage({ type: "success", text: `Successfully deleted ${label}.` });
+      await loadData(tab);
+    } catch (err) {
+      setMessage({ type: "error", text: err.message || `Failed to delete ${label}.` });
+    }
+  };
+
+  const changeEditingField = (field, value) => {
+    setEditingRecord((current) => ({ ...current, [field]: value }));
   };
 
   const tabs = [
@@ -127,8 +160,49 @@ export default function AdminDashboard() {
               <ul style={listStyle}>
                 {categories.map((cat) => (
                   <li key={cat.id} style={listItemStyle}>
-                    <strong>{cat.name}</strong>
-                    <span style={mutedStyle}>ID: {cat.id}</span>
+                    {editingRecord?.type === "category" && editingRecord.id === cat.id ? (
+                      <form
+                        onSubmit={(e) =>
+                          handleUpdate(
+                            e,
+                            "categories",
+                            { category: { name: editingRecord.name.trim() } },
+                            "categories"
+                          )
+                        }
+                        style={inlineFormStyle}
+                      >
+                        <input
+                          aria-label={`Category ${cat.id} name`}
+                          value={editingRecord.name}
+                          onChange={(e) => changeEditingField("name", e.target.value)}
+                          required
+                          style={inputStyle}
+                        />
+                        <button type="submit" style={smallBtnStyle}>Save</button>
+                        <button type="button" style={smallSecondaryBtnStyle} onClick={() => setEditingRecord(null)}>Cancel</button>
+                      </form>
+                    ) : (
+                      <>
+                        <span><strong>{cat.name}</strong> <span style={mutedStyle}>ID: {cat.id}</span></span>
+                        <div style={actionButtonsStyle}>
+                          <button
+                            type="button"
+                            style={smallSecondaryBtnStyle}
+                            onClick={() => setEditingRecord({ type: "category", id: cat.id, name: cat.name })}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            style={smallDangerBtnStyle}
+                            onClick={() => handleDelete("categories", cat.id, "categories", "category")}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -190,18 +264,98 @@ export default function AdminDashboard() {
                           <th style={cellStyle}>ID</th>
                           <th style={cellStyle}>Product</th>
                           <th style={cellStyle}>Description</th>
+                          <th style={cellStyle}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {group.products.map((product) => (
                           <tr key={product.id}>
                             <td style={cellStyle}>{product.id}</td>
-                            <td style={cellStyle}>
-                              <strong>{product.name}</strong>
-                            </td>
-                            <td style={cellStyle}>
-                              {product.description || "—"}
-                            </td>
+                            {editingRecord?.type === "product" && editingRecord.id === product.id ? (
+                              <>
+                                <td style={cellStyle}>
+                                  <input
+                                    aria-label={`Product ${product.id} name`}
+                                    value={editingRecord.name}
+                                    onChange={(e) => changeEditingField("name", e.target.value)}
+                                    required
+                                    style={inputStyle}
+                                  />
+                                  <select
+                                    aria-label={`Product ${product.id} category`}
+                                    value={editingRecord.category_id}
+                                    onChange={(e) => changeEditingField("category_id", e.target.value)}
+                                    required
+                                    style={{ ...inputStyle, marginTop: 8 }}
+                                  >
+                                    {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                                  </select>
+                                </td>
+                                <td style={cellStyle}>
+                                  <textarea
+                                    aria-label={`Product ${product.id} description`}
+                                    value={editingRecord.description}
+                                    onChange={(e) => changeEditingField("description", e.target.value)}
+                                    required
+                                    rows="3"
+                                    style={inputStyle}
+                                  />
+                                </td>
+                                <td style={cellStyle}>
+                                  <form
+                                    onSubmit={(e) =>
+                                      handleUpdate(
+                                        e,
+                                        "products",
+                                        {
+                                          product: {
+                                            name: editingRecord.name.trim(),
+                                            description: editingRecord.description.trim(),
+                                            category_id: editingRecord.category_id,
+                                          },
+                                        },
+                                        "products"
+                                      )
+                                    }
+                                    style={actionButtonsStyle}
+                                  >
+                                    <button type="submit" style={smallBtnStyle}>Save</button>
+                                    <button type="button" style={smallSecondaryBtnStyle} onClick={() => setEditingRecord(null)}>Cancel</button>
+                                  </form>
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td style={cellStyle}><strong>{product.name}</strong></td>
+                                <td style={cellStyle}>{product.description || "—"}</td>
+                                <td style={cellStyle}>
+                                  <div style={actionButtonsStyle}>
+                                    <button
+                                      type="button"
+                                      style={smallSecondaryBtnStyle}
+                                      onClick={() =>
+                                        setEditingRecord({
+                                          type: "product",
+                                          id: product.id,
+                                          name: product.name,
+                                          description: product.description || "",
+                                          category_id: group.category_id,
+                                        })
+                                      }
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
+                                      type="button"
+                                      style={smallDangerBtnStyle}
+                                      onClick={() => handleDelete("products", product.id, "products", "product")}
+                                    >
+                                      Delete
+                                    </button>
+                                  </div>
+                                </td>
+                              </>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -295,18 +449,90 @@ export default function AdminDashboard() {
                       <th style={cellStyle}>ID</th>
                       <th style={cellStyle}>Code</th>
                       <th style={cellStyle}>Percentage Off</th>
+                      <th style={cellStyle}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {discounts.map((discount) => (
                       <tr key={discount.id}>
                         <td style={cellStyle}>{discount.id}</td>
-                        <td style={cellStyle}>
-                          <strong>{discount.code}</strong>
-                        </td>
-                        <td style={cellStyle}>
-                          {discount.percentage}%
-                        </td>
+                      {editingRecord?.type === "discount" && editingRecord.id === discount.id ? (
+                        <>
+                          <td style={cellStyle}>
+                            <input
+                              aria-label={`Discount ${discount.id} code`}
+                              value={editingRecord.code}
+                              onChange={(e) => changeEditingField("code", e.target.value)}
+                              required
+                              style={inputStyle}
+                            />
+                          </td>
+                          <td style={cellStyle}>
+                            <input
+                              aria-label={`Discount ${discount.id} percentage`}
+                              type="number"
+                              min="0.1"
+                              max="100"
+                              step="0.1"
+                              value={editingRecord.percentage}
+                              onChange={(e) => changeEditingField("percentage", e.target.value)}
+                              required
+                              style={inputStyle}
+                            />
+                          </td>
+                          <td style={cellStyle}>
+                            <form
+                              onSubmit={(e) =>
+                                handleUpdate(
+                                  e,
+                                  "discounts",
+                                  {
+                                    discount: {
+                                      code: editingRecord.code.trim(),
+                                      percentage: editingRecord.percentage,
+                                    },
+                                  },
+                                  "discounts"
+                                )
+                              }
+                              style={actionButtonsStyle}
+                            >
+                              <button type="submit" style={smallBtnStyle}>Save</button>
+                              <button type="button" style={smallSecondaryBtnStyle} onClick={() => setEditingRecord(null)}>Cancel</button>
+                            </form>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td style={cellStyle}><strong>{discount.code}</strong></td>
+                          <td style={cellStyle}>{discount.percentage}%</td>
+                          <td style={cellStyle}>
+                            <div style={actionButtonsStyle}>
+                              <button
+                                type="button"
+                                style={smallSecondaryBtnStyle}
+                                onClick={() =>
+                                  setEditingRecord({
+                                    type: "discount",
+                                    id: discount.id,
+                                    code: discount.code,
+                                    percentage: discount.percentage,
+                                  })
+                                }
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                style={smallDangerBtnStyle}
+                                onClick={() => handleDelete("discounts", discount.id, "discounts", "discount")}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </>
+                      )}
                       </tr>
                     ))}
                   </tbody>
@@ -443,9 +669,40 @@ const listStyle = {
 const listItemStyle = {
   display: "flex",
   justifyContent: "space-between",
+  alignItems: "center",
   gap: 12,
   padding: "12px 0",
   borderBottom: "1px solid #eee",
+};
+
+const inlineFormStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  width: "100%",
+};
+
+const actionButtonsStyle = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 8,
+};
+
+const smallBtnStyle = {
+  ...btnStyle,
+  padding: "8px 12px",
+  fontSize: 14,
+};
+
+const smallSecondaryBtnStyle = {
+  ...smallBtnStyle,
+  backgroundColor: "#e9ecef",
+  color: "#333",
+};
+
+const smallDangerBtnStyle = {
+  ...smallBtnStyle,
+  backgroundColor: "#b02a37",
 };
 
 const mutedStyle = {

@@ -34,9 +34,9 @@ export const fetchCart = () => {
 };
 
 // Add an item to the cart
-export const addToCart = (productListingId, quantity) => {
+export const addToCart = (listingReferenceId, quantity) => {
   return fetchRequest("/api/v1/users/cart/items", "POST", { 
-    product_listing_id: productListingId, 
+    listing_reference_id: listingReferenceId,
     quantity: quantity 
   });
 };

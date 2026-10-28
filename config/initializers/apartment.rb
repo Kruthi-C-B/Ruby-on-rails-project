@@ -24,6 +24,7 @@ Apartment.configure do |config|
     Tenant
     Product
     Category
+    ListingReference
     Cart
     CartItem
     Discount
@@ -34,6 +35,7 @@ Apartment.configure do |config|
   config.tenant_names = -> { Tenant.pluck(:slug) }
 
   config.prepend_environment = !Rails.env.production?
+  config.db_migrate_tenant_missing_strategy = :create_tenant
 end
 
 
