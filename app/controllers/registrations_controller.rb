@@ -1,4 +1,6 @@
 class RegistrationsController < ApplicationController
+  before_action :set_mfe_entry
+
   def new
     @user = User.new
   end
@@ -25,5 +27,9 @@ end
 
   def user_params
     params.require(:user).permit(:email, :password, :password_confirmation)
+  end
+
+  def set_mfe_entry
+    @mfe_entry = "authentication"
   end
 end

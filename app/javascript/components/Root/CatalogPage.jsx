@@ -74,13 +74,13 @@ export default function CatalogPage({ storeName }) {
         
         {/* Conditionally render the button based on admin status */}
         {isAdmin ? (
-          <Link 
-            to="/admin/dashboard" 
+          <a
+            href="/admin/dashboard"
             className="catalog-button" 
             style={{ padding: "10px 15px", background: "#0056b3", color: "#fff", textDecoration: "none", borderRadius: "5px", fontWeight: "bold" }}
           >
             ⚙️ Admin Dashboard
-          </Link>
+          </a>
         ) : (
           <Link 
             to="/cart" 
