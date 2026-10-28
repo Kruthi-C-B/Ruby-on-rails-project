@@ -10,16 +10,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_133810) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_27_120005) do
   create_table "cart_items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "cart_id", null: false
-    t.bigint "product_listing_id", null: false
     t.integer "quantity"
     t.decimal "unit_price", precision: 10, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "listing_reference_id", null: false
     t.index ["cart_id"], name: "index_cart_items_on_cart_id"
-    t.index ["product_listing_id"], name: "index_cart_items_on_product_listing_id"
+    t.index ["listing_reference_id"], name: "index_cart_items_on_listing_reference_id"
   end
 
   create_table "carts", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -28,7 +28,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_133810) do
     t.string "status", default: "pending"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "purchase_reference"
     t.index ["discount_id"], name: "index_carts_on_discount_id"
+    t.index ["purchase_reference"], name: "index_carts_on_purchase_reference", unique: true
     t.index ["user_id"], name: "index_carts_on_user_id"
   end
 
@@ -44,6 +46,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_133810) do
     t.decimal "percentage", precision: 5, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "listing_references", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "tenant_id", null: false
+    t.bigint "product_id", null: false
+    t.bigint "tenant_listing_id", null: false
+    t.decimal "price", precision: 10, scale: 2, default: "0.0", null: false
+    t.integer "stock_quantity", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_listing_references_on_product_id"
+    t.index ["tenant_id", "product_id"], name: "index_listing_references_on_tenant_id_and_product_id", unique: true
+    t.index ["tenant_id", "tenant_listing_id"], name: "index_listing_references_on_tenant_id_and_tenant_listing_id", unique: true
+    t.index ["tenant_id"], name: "index_listing_references_on_tenant_id"
   end
 
   create_table "login_attempts", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -71,15 +87,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_133810) do
   end
 
   create_table "product_listings", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "tenant_id", null: false
     t.bigint "product_id", null: false
     t.decimal "price", precision: 10, scale: 2, default: "0.0", null: false
     t.integer "stock_quantity", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["product_id"], name: "index_product_listings_on_product_id"
-    t.index ["tenant_id", "product_id"], name: "index_product_listings_on_tenant_id_and_product_id", unique: true
-    t.index ["tenant_id"], name: "index_product_listings_on_tenant_id"
   end
 
   create_table "products", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -90,6 +103,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_133810) do
     t.datetime "updated_at", null: false
     t.index ["category_id"], name: "index_products_on_category_id"
     t.index ["name"], name: "index_products_on_name"
+  end
+
+  create_table "purchase_histories", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "product_listing_id", null: false
+    t.bigint "product_id", null: false
+    t.integer "quantity", null: false
+    t.decimal "unit_price", precision: 10, scale: 2, null: false
+    t.decimal "total_price", precision: 10, scale: 2, null: false
+    t.string "purchase_reference", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "purchased_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.decimal "discount_amount", precision: 10, scale: 2, default: "0.0", null: false
+    t.index ["product_id"], name: "index_purchase_histories_on_product_id"
+    t.index ["purchase_reference", "product_listing_id"], name: "index_purchase_histories_on_reference_and_listing", unique: true
+    t.index ["user_id"], name: "index_purchase_histories_on_user_id"
   end
 
   create_table "tenants", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -125,12 +156,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_133810) do
   end
 
   add_foreign_key "cart_items", "carts"
-  add_foreign_key "cart_items", "product_listings"
+  add_foreign_key "cart_items", "listing_references"
   add_foreign_key "carts", "discounts"
   add_foreign_key "carts", "users"
+  add_foreign_key "listing_references", "products"
+  add_foreign_key "listing_references", "tenants"
   add_foreign_key "login_audits", "users"
-  add_foreign_key "product_listings", "products"
-  add_foreign_key "product_listings", "tenants"
   add_foreign_key "products", "categories"
   add_foreign_key "tenants", "users"
 end

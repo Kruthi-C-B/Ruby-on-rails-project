@@ -27,7 +27,42 @@ class Api::V1::Admin::ProductsController < Api::V1::Admin::BaseController
     end
   end
 
+  def update
+    product = Product.find(params[:id])
+    if product.update(product_params)
+      render json: product, status: :ok
+    else
+      render json: { errors: product.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    product = Product.find(params[:id])
+    if ListingReference.exists?(product_id: product.id) || tenant_product_records_exist?(product.id)
+      return render json: {
+        errors: [ "Cannot delete a product that is listed by a store or appears in purchase history." ]
+      }, status: :unprocessable_entity
+    end
+
+    product.destroy!
+    render json: { message: "Product deleted." }, status: :ok
+  rescue ActiveRecord::RecordNotFound
+    render json: { errors: [ "Product not found." ] }, status: :not_found
+  rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::InvalidForeignKey => error
+    render json: { errors: [ error.message ] }, status: :unprocessable_entity
+  end
+
   private
+
+  def tenant_product_records_exist?(product_id)
+    Tenant.all.any? do |tenant|
+      TenantDatabase.switch(tenant) do
+        ProductListing.exists?(product_id: product_id) ||
+          PurchaseHistory.exists?(product_id: product_id)
+      end
+    end
+  end
+
   def product_params
     params.require(:product).permit(:name, :description, :category_id)
   end

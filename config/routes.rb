@@ -4,6 +4,8 @@ Rails.application.routes.draw do
   get "/products", to: "catalog#index", as: :products
   get "/products/:id", to: "catalog#index", as: :product
 
+  get "/favicon.ico", to: redirect("/icon.png")
+
   # JSON API used by the React pages
   namespace :api do
     namespace :v1 do
@@ -13,9 +15,9 @@ Rails.application.routes.draw do
       resources :discounts, only: [ :index ]
 
       namespace :admin do
-        resources :categories, only: [ :create ]
-        resources :products, only: [ :index, :create ]
-        resources :discounts, only: [ :create ]
+        resources :categories, only: [ :create, :update, :destroy ]
+        resources :products, only: [ :index, :create, :update, :destroy ]
+        resources :discounts, only: [ :index, :create, :update, :destroy ]
         resources :login_audits, only: [ :index ]
         get :cart_metrics, to: "cart_metrics#index"
         get :users, to: "platform#users"

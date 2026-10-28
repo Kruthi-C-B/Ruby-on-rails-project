@@ -31,37 +31,46 @@ class Api::V1::Admin::PlatformController < ApplicationController
 
 
   def audit_trail
-  versions = PaperTrail::Version
-    .where(item_type: "ProductListing")
-    .order(created_at: :desc)
-    .limit(200)
+    audit_trail = Tenant.all.flat_map do |tenant|
+      TenantDatabase.switch(tenant) do
+        PaperTrail::Version
+          .where(item_type: %w[ProductListing PurchaseHistory])
+          .order(created_at: :desc)
+          .limit(200)
+          .map do |version|
+            changes = version.object_changes.present? ? YAML.safe_load(
+              version.object_changes,
+              permitted_classes: [ BigDecimal, Time, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone ],
+              aliases: true
+            ) : {}
+            object = version.object.present? ? YAML.safe_load(
+              version.object,
+              permitted_classes: [ BigDecimal, Time, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone ],
+              aliases: true
+            ) : {}
+            product_id = changes.dig("product_id", 1) || object["product_id"]
+            product_id ||= changes.dig("product_id", 0)
+            unit_price_changes = changes["unit_price"]
+            actor = User.find_by(id: version.whodunnit)
 
-    audit_trail = versions.map do |version|
-      listing = ProductListing.includes(:product, :tenant)
-        .find_by(id: version.item_id)
-
-      changes = version.object_changes.present? ? YAML.safe_load(
-        version.object_changes,
-        permitted_classes: [ BigDecimal, Time, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone ],
-        aliases: true
-      ) : {}
-      actor = User.find_by(id: version.whodunnit)
-
-      {
-        id: version.id,
-        date: version.created_at,
-        event: version.event,
-        actor: actor&.email || "User ##{version.whodunnit || 'unknown'}",
-        store_name: listing&.tenant&.name || "Deleted store",
-        product_name: listing&.product&.name || "Deleted product",
-        price_before: changes.dig("price", 0),
-        price_after: changes.dig("price", 1),
-        stock_before: changes.dig("stock_quantity", 0),
-        stock_after: changes.dig("stock_quantity", 1)
-      }
+            {
+              id: "#{tenant.id}-#{version.id}",
+              date: version.created_at,
+              event: version.event,
+              actor: actor&.email || "User ##{version.whodunnit || 'unknown'}",
+              store_name: tenant.name,
+              product_name: Product.find_by(id: product_id)&.name || "Deleted product",
+              price_before: changes.dig("price", 0) || unit_price_changes&.first,
+              price_after: changes.dig("price", 1) || unit_price_changes&.last,
+              stock_before: changes.dig("stock_quantity", 0),
+              stock_after: changes.dig("stock_quantity", 1)
+            }
+          end
+      end
     end
+    audit_trail = audit_trail.sort_by { |entry| entry[:date] || Time.at(0) }.reverse.first(200)
 
-  render json: { audit_trail: audit_trail }, status: :ok
+    render json: { audit_trail: audit_trail }, status: :ok
   end
 
 

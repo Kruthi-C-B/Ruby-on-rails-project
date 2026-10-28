@@ -11,6 +11,7 @@ module Api
             tenant = current_user.build_tenant(tenant_params)
 
             if tenant.save
+              TenantDatabase.provision!(tenant)
               render json: {
                 message: "Store profile created successfully!",
                 tenant: tenant
@@ -20,6 +21,12 @@ module Api
                 errors: tenant.errors.full_messages
               }, status: :unprocessable_entity
             end
+          rescue Apartment::ApartmentError, ActiveRecord::ActiveRecordError => error
+            tenant&.destroy
+            Rails.logger.error("Tenant database provisioning failed: #{error.message}")
+            render json: {
+              errors: [ "Unable to initialize the store database." ]
+            }, status: :unprocessable_entity
           end
 
           def update

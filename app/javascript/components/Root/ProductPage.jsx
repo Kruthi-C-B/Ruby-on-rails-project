@@ -29,9 +29,9 @@ export default function ProductPage() {
   }, [id]);
 
   // Handle adding an item (or a recommended item) to the cart
-  const handleAddToCart = async (listingId) => {
+  const handleAddToCart = async (listingReferenceId) => {
     try {
-      await addToCart(listingId, 1);
+      await addToCart(listingReferenceId, 1);
       alert("Item added to cart!");
     } catch (err) {
       alert("Failed to add" + err.message);
@@ -86,7 +86,7 @@ export default function ProductPage() {
                 {!isAdmin && (
                   <td>
                     <button 
-                      onClick={() => handleAddToCart(listing.id)}
+                      onClick={() => handleAddToCart(listing.listingReferenceId)}
                       disabled={listing.stock === 0}
                       style={{
                         padding: "6px 12px",
@@ -124,7 +124,7 @@ export default function ProductPage() {
                   {/* Hide recommendation cart buttons from admins too */}
                   {!isAdmin && (
                     <button 
-                      onClick={() => handleAddToCart(rec.id)}
+                      onClick={() => handleAddToCart(rec.listingReferenceId)}
                       style={{ padding: "6px 12px", cursor: "pointer", background: "#eee", border: "1px solid #ccc", borderRadius: "4px" }}
                     >
                       Add to Cart
