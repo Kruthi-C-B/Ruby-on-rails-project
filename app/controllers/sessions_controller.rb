@@ -1,6 +1,4 @@
 class SessionsController < ApplicationController
-  before_action :set_mfe_entry
-
   def new; end
 
   def create
@@ -66,11 +64,5 @@ class SessionsController < ApplicationController
   def destroy
     session[:user_id] = nil
     redirect_to root_path, notice: "Logged out successfully!"
-  end
-
-  private
-
-  def set_mfe_entry
-    @mfe_entry = "authentication"
   end
 end

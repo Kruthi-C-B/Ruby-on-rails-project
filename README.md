@@ -3,19 +3,6 @@
 This README would normally document whatever steps are necessary to get the
 application up and running.
 
-## Frontend architecture
-
-The Rails application serves four independently compiled React micro frontends:
-
-- `authentication` handles login and account registration.
-- `user-application` handles the product catalog, product details, and shopping cart.
-- `store-owner` handles store setup, profile editing, and product listings.
-- `platform-admin` handles the platform administration dashboard.
-
-Each entrypoint has its own React component context and is selected by the Rails
-view for the current route. The frontends share the Rails session, JSON APIs,
-and application layout; they do not bundle the other frontend areas.
-
 ## Tenant databases and purchase history
 
 Tenant-specific product listings and purchase history are stored in the
