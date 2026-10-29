@@ -1,7 +1,1 @@
-<% if @mfe_entry == "store-owner" %>
-  <%= react_component("OwnerApp") %>
-<% elsif @mfe_entry == "platform-admin" %>
-  <%= react_component("AdminDashboard") %>
-<% else %>
-  <%= react_component("UserApp", @current_state) %>
-<% end %>
+<%= react_component("Root", @current_state) %>

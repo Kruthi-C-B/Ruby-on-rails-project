@@ -1,4 +1,23 @@
-<%= react_component("AuthenticationApp", {
-  page: "login",
-  adminLogin: params[:admin] == "true"
-}) %>
+<h2><%= params[:admin] == "true" ? "Admin Log In" : "User Log In" %></h2>
+
+<%= form_with url: login_path, method: :post, local: true do |f| %>
+  <%= f.hidden_field :admin_login, value: params[:admin] %>
+
+  <div>
+    <%= f.label :email %><br>
+    <%= f.email_field :email, required: true %>
+  </div>
+
+  <br>
+
+  <div>
+    <%= f.label :password %><br>
+    <%= f.password_field :password, required: true %>
+  </div>
+
+  <br>
+
+  <%= f.submit params[:admin] == "true" ? "Log In to Store Dashboard" : "Log In" %>
+<% end %>
+
+<p>Don't have an account? <%= link_to "Sign up", signup_path %></p>
