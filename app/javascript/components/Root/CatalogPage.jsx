@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchGet } from "../../lib/api";
+import { Alert, Button, EmptyState, Input, PageContainer, PageHeader, Select, Spinner } from "../ui";
+import ProductGrid from "../product/ProductGrid";
 
 export default function CatalogPage({ storeName }) {
   const [categories, setCategories] = useState([]);
@@ -43,79 +45,49 @@ export default function CatalogPage({ storeName }) {
     setFilters({ query, categoryId });
   }
 
-  function renderProducts() {
-    if (loading) return <p>Loading products…</p>;
-    if (products.length === 0) return <p>No products found in the catalog.</p>;
-
-    return (
-      <div className="catalog-grid">
-        {products.map((product) => (
-          <div key={product.id} className="catalog-card">
-            <h3>
-              <Link to={`/products/${product.id}`}>{product.name}</Link>
-            </h3>
-            <p>
-              <strong>Category:</strong> {product.category}
-            </p>
-            <p>{product.description}</p>
-            <Link className="catalog-button" to={`/products/${product.id}`}>
-              Compare Prices
-            </Link>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h1>Product Catalog</h1>
-        
-        {/* Conditionally render the button based on admin status */}
-        {isAdmin ? (
-          <Link 
-            to="/admin/dashboard" 
-            className="catalog-button" 
-            style={{ padding: "10px 15px", background: "#0056b3", color: "#fff", textDecoration: "none", borderRadius: "5px", fontWeight: "bold" }}
-          >
-            ⚙️ Admin Dashboard
-          </Link>
-        ) : (
-          <Link 
-            to="/cart" 
-            className="catalog-button" 
-            style={{ padding: "10px 15px", background: "#000", color: "#fff", textDecoration: "none", borderRadius: "5px", fontWeight: "bold" }}
-          >
-            🛒 View Cart
-          </Link>
-        )}
-      </div>
-      
+    <PageContainer>
+      <PageHeader
+        title="Product Catalog"
+        action={
+          isAdmin ? (
+            <Button as={Link} to="/admin/dashboard">Admin Dashboard</Button>
+          ) : (
+            <Button as={Link} to="/cart">View Cart</Button>
+          )
+        }
+      />
+
       {storeName && <p className="catalog-note">You run {storeName}. Manage it from My Store Dashboard.</p>}
 
       <form className="catalog-filters" onSubmit={applyFilters}>
-        <label htmlFor="catalog-query">Search Product:</label>
-        <input id="catalog-query" value={query} placeholder="e.g. Headphones" onChange={(e) => setQuery(e.target.value)} />
-        <label htmlFor="catalog-category">Category:</label>
-        <select id="catalog-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+        <Input
+          id="catalog-query"
+          label="Search Product"
+          value={query}
+          placeholder="e.g. Headphones"
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <Select id="catalog-category" label="Category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
           <option value="">All Categories</option>
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}
             </option>
           ))}
-        </select>
-        <button type="submit">Filter</button>
+        </Select>
+        <Button type="submit">Filter</Button>
       </form>
 
       <hr />
-      {error && (
-        <p role="alert" className="catalog-error">
-          {error}
-        </p>
+      {error && <Alert>{error}</Alert>}
+      {loading ? (
+        <Spinner label="Loading products…" />
+      ) : products.length === 0 ? (
+        <EmptyState title="No products found">Try changing your search or category filters.</EmptyState>
+      ) : (
+        <ProductGrid products={products} />
       )}
-      {renderProducts()}
-    </div>
+    </PageContainer>
   );
 }

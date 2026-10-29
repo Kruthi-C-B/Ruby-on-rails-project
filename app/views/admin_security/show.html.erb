@@ -1,0 +1,37 @@
+<% content_for :head do %>
+  <script type="systemjs-importmap">
+    {
+      "imports": {
+        "single-spa": "https://cdn.jsdelivr.net/npm/single-spa@6.0.3/lib/es5/system/single-spa.min.js",
+        "react": "https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js",
+        "react-dom": "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js",
+        "react-dom/client": "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js",
+        "@localfind/login-audit": "<%= Rails.env.development? ? "http://localhost:8500/localfind-login-audit.js" : "/mfe/localfind-login-audit.js" %>"
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/systemjs@6.15.1/dist/system.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/systemjs@6.15.1/dist/extras/amd.min.js"></script>
+<% end %>
+
+<h1>Security</h1>
+<div id="login-audit-mfe"></div>
+
+<script>
+  System.import("single-spa")
+    .then(function (singleSpa) {
+      singleSpa.registerApplication({
+        name: "@localfind/login-audit",
+        app: function () {
+          return System.import("@localfind/login-audit");
+        },
+        activeWhen: "/admin/security"
+      });
+      singleSpa.start();
+    })
+    .catch(function (error) {
+      console.error("Failed to start the login audit microfrontend", error);
+      document.getElementById("login-audit-mfe").textContent =
+        "The login audit microfrontend could not be loaded.";
+    });
+</script>

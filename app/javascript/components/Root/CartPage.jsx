@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { fetchCart, applyDiscount, fetchGet, fetchRequest } from "../../lib/api";
+import { Alert, Badge, Button, Card, EmptyState, Input, PageContainer, PageHeader, Section, Spinner } from "../ui";
 
 export default function CartPage() {
   const [cart, setCart] = useState(null);
@@ -87,16 +88,16 @@ export default function CartPage() {
     }
   };
 
-  if (loading) return <p style={{ padding: "20px" }}>Loading your cart...</p>;
+  if (loading) return <PageContainer size="narrow"><Spinner label="Loading your cart…" /></PageContainer>;
 
   return (
-    <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
-      <h2>Your Shopping Cart</h2>
+    <PageContainer size="narrow">
+      <PageHeader title="Your Shopping Cart" />
       
       {cartError ? (
-        <p role="alert" style={{ padding: "20px 0", color: "#b00020" }}>{cartError}</p>
+        <Alert>{cartError}</Alert>
       ) : !cart || !cart.items || cart.items.length === 0 ? (
-        <p style={{ padding: "20px 0", fontStyle: "italic", color: "#666" }}>Your cart is empty.</p>
+        <EmptyState title="Your cart is empty." />
       ) : (
         <>
           <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse", marginBottom: "30px" }}>
@@ -154,47 +155,48 @@ export default function CartPage() {
               <span>${parseFloat(cart.total_price).toFixed(2)}</span>
             </div>
 
-            <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
-              <input
+            <div className="lf-inline-form" style={{ marginTop: "20px" }}>
+              <Input
                 type="text"
+                aria-label="Promo code"
                 value={discountCode}
                 onChange={(e) => setDiscountCode(e.target.value)}
                 placeholder="Enter promo code"
-                style={{ padding: "8px", flex: 1, border: "1px solid #ccc", borderRadius: "4px" }}
               />
-              <button 
-                onClick={handleApplyDiscount} 
-                style={{ padding: "8px 16px", cursor: "pointer", background: "#eee", border: "1px solid #ccc", borderRadius: "4px" }}>
+              <Button variant="secondary" onClick={handleApplyDiscount}>
                 Apply
-              </button>
+              </Button>
             </div>
             
             {discountMessage && (
-              <p style={{ color: discountMessage.includes("Invalid") ? "red" : "green", marginTop: "10px", fontSize: "0.9em" }}>
+              <Alert variant={discountMessage.includes("Invalid") ? "error" : "success"}>
                 {discountMessage}
-              </p>
+              </Alert>
             )}
 
-            <button 
+            <Button
               onClick={handleCheckout}
-              style={{ marginTop: "20px", padding: "12px", width: "100%", background: "#000", color: "#fff", cursor: "pointer", border: "none", borderRadius: "4px" }}>
+              className="lf-button--full"
+              style={{ marginTop: "20px" }}
+            >
               Proceed to Checkout
-            </button>
+            </Button>
           </div>
         </>
       )}
 
       {/* --- Past Orders Section --- */}
       {orders.length > 0 && (
-        <div style={{ marginTop: "60px", paddingTop: "20px", borderTop: "2px solid #eee" }}>
-          <h2>Your Past Orders</h2>
+        <Section title="Your Past Orders">
           {orders.map((order) => (
-            <div key={order.id} style={{ marginBottom: "20px", padding: "20px", border: "1px solid #e0e0e0", borderRadius: "8px", backgroundColor: "#fafafa" }}>
-              <h3 style={{ marginTop: 0 }}>
-                Order #{order.id} <span style={{ fontSize: "0.8em", color: "#666", fontWeight: "normal", marginLeft: "10px" }}>({order.status})</span>
-              </h3>
+            <Card
+              key={order.id}
+              variant="muted"
+              className="lf-order-card"
+              title={<>Order #{order.id} <Badge>{order.status}</Badge></>}
+            >
               
-              <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse", marginTop: "10px" }}>
+                <table style={{ width: "100%", textAlign: "left", borderCollapse: "collapse", marginTop: "10px" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid #ccc" }}>
                     <th style={{ paddingBottom: "8px" }}>Product</th>
@@ -223,10 +225,10 @@ export default function CartPage() {
                 )}
                 <strong>Total Paid: ${parseFloat(order.total_price || 0).toFixed(2)}</strong>
               </div>
-            </div>
+          </Card>
           ))}
-        </div>
+        </Section>
       )}
-    </div>
+    </PageContainer>
   );
 }

@@ -1,3 +1,5 @@
+@import "../ui/ui.css";
+
 .catalog-filters {
   display: flex;
   flex-wrap: wrap;
@@ -5,37 +7,16 @@
   gap: 8px;
 }
 
-.catalog-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+.catalog-filters .lf-field {
+  flex: 1 1 220px;
 }
 
-.catalog-card {
-  width: 250px;
-  padding: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-
-.catalog-button {
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: 4px;
-  background: #007bff;
-  color: white;
-  text-decoration: none;
+.catalog-filters > .lf-button {
+  align-self: flex-end;
 }
 
 .catalog-note {
   color: #555;
-}
-
-.catalog-error {
-  padding: 10px;
-  border-radius: 4px;
-  background: #f8d7da;
-  color: #721c24;
 }
 
 .compare-table {
@@ -49,18 +30,89 @@
   text-align: left;
 }
 
-.stock {
+.lf-store-owner-page {
+  max-width: 900px;
+}
+
+.lf-admin-panel {
+  margin-bottom: 30px;
+}
+
+.lf-category-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lf-space-2);
+  margin-block: var(--lf-space-3);
+}
+
+.lf-admin-panel > .lf-card__body {
+  padding: 20px;
+}
+
+.lf-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lf-space-3);
+}
+
+.lf-form-actions,
+.lf-inline-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--lf-space-2);
+}
+
+.lf-inline-form .lf-field {
+  flex: 1;
+}
+
+.lf-button--full {
+  width: 100%;
+}
+
+.lf-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.lf-recommendations {
+  margin-top: 40px;
+}
+
+.lf-order-card {
+  margin-bottom: var(--lf-space-3);
+}
+
+.lf-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--lf-space-3);
+  margin-bottom: var(--lf-space-3);
+}
+
+.lf-metric-card {
+  padding: var(--lf-space-3);
+  border-color: #b6d4fe;
+  background: #f0f8ff;
+}
+
+.lf-metric-card__value {
+  margin-bottom: 0;
+  color: #004085;
+  font-size: 2em;
   font-weight: bold;
 }
 
-.stock-out {
-  color: #dc3545;
+.lf-product-card__category {
+  margin-top: 0;
 }
 
-.stock-low {
-  color: #fd7e14;
+.lf-product-card__price {
+  font-weight: bold;
 }
 
-.stock-ok {
-  color: #28a745;
+@media (max-width: 600px) {
+  .lf-inline-form {
+    align-items: stretch;
+  }
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { fetchGet, fetchRequest } from "../../lib/api";
-import LoginAuditLog from "./LoginAuditLog";
 import StoreAudit from "./StoreAudit";
+import { Alert, Button, Card, EmptyState, Input, PageContainer, PageHeader, Select, Spinner } from "../ui";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("categories");
@@ -9,6 +9,7 @@ export default function AdminDashboard() {
 
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [selectedProductCategory, setSelectedProductCategory] = useState(null);
   const [discounts, setDiscounts] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -107,53 +108,63 @@ export default function AdminDashboard() {
     ["audit", "Store Audit"],
   ];
 
+  const visibleProductGroups = selectedProductCategory === null
+    ? products
+    : products.filter((group) => String(group.category_id) === String(selectedProductCategory));
+  const productCategoryOptions = categories.length > 0
+    ? categories
+    : products.map(({ category_id, category_name }) => ({ id: category_id, name: category_name }));
+
   return (
-    <div style={pageStyle}>
-      <h1 style={headingStyle}>Platform Admin Dashboard</h1>
+    <PageContainer className="lf-admin-dashboard">
+      <PageHeader title="Platform Admin Dashboard" />
 
       <div style={tabsStyle}>
         {tabs.map(([key, label]) => (
-          <button
+          <Button
             key={key}
             onClick={() => {
               setActiveTab(key);
               setMessage(null);
             }}
-            style={tabStyle(activeTab === key)}
+            variant={activeTab === key ? "primary" : "secondary"}
+            aria-pressed={activeTab === key}
           >
             {label}
-          </button>
+          </Button>
         ))}
       </div>
 
       {message && (
-        <div style={alertStyle(message.type)}>
+        <Alert variant={message.type}>
           {message.text}
-        </div>
+        </Alert>
       )}
 
       {loadError && (
-        <div style={alertStyle("error")}>
+        <Alert>
           {loadError}
-          <button
+          <Button
+            variant="outline"
+            size="small"
             onClick={() => loadData(activeTab)}
             style={{ marginLeft: 12 }}
           >
             Retry
-          </button>
-        </div>
+          </Button>
+        </Alert>
       )}
 
-      {loading && <p>Loading existing records...</p>}
+      {loading && <Spinner label="Loading existing records…" />}
 
       {/* CATEGORIES */}
       {activeTab === "categories" && (
         <>
-          <section style={sectionStyle}>
+          <Card as="section" className="lf-admin-panel">
             <h2>Existing Categories ({categories.length})</h2>
 
             {!loading && categories.length === 0 && (
-              <p>No categories found yet.</p>
+              <EmptyState title="No categories found yet." />
             )}
 
             {categories.length > 0 && (
@@ -179,27 +190,29 @@ export default function AdminDashboard() {
                           required
                           style={inputStyle}
                         />
-                        <button type="submit" style={smallBtnStyle}>Save</button>
-                        <button type="button" style={smallSecondaryBtnStyle} onClick={() => setEditingRecord(null)}>Cancel</button>
+                        <Button type="submit" size="small">Save</Button>
+                        <Button type="button" variant="outline" size="small" onClick={() => setEditingRecord(null)}>Cancel</Button>
                       </form>
                     ) : (
                       <>
                         <span><strong>{cat.name}</strong> <span style={mutedStyle}>ID: {cat.id}</span></span>
                         <div style={actionButtonsStyle}>
-                          <button
+                          <Button
                             type="button"
-                            style={smallSecondaryBtnStyle}
+                            variant="outline"
+                            size="small"
                             onClick={() => setEditingRecord({ type: "category", id: cat.id, name: cat.name })}
                           >
                             Edit
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
-                            style={smallDangerBtnStyle}
+                            variant="danger"
+                            size="small"
                             onClick={() => handleDelete("categories", cat.id, "categories", "category")}
                           >
                             Delete
-                          </button>
+                          </Button>
                         </div>
                       </>
                     )}
@@ -207,9 +220,9 @@ export default function AdminDashboard() {
                 ))}
               </ul>
             )}
-          </section>
+          </Card>
 
-          <section style={sectionStyle}>
+          <Card as="section" className="lf-admin-panel">
             <h2>Add New Category</h2>
 
             <form
@@ -222,39 +235,61 @@ export default function AdminDashboard() {
                 )
               }
             >
-              <div style={inputGroup}>
-                <label>Category Name</label>
-                <input
-                  name="name"
-                  required
-                  style={inputStyle}
-                  placeholder="e.g. Electronics, Home Goods"
-                />
-              </div>
+              <Input
+                label="Category Name"
+                name="name"
+                required
+                style={inputStyle}
+                placeholder="e.g. Electronics, Home Goods"
+              />
 
-              <button type="submit" style={btnStyle}>
+              <Button type="submit" size="large">
                 Create Category
-              </button>
+              </Button>
             </form>
-          </section>
+          </Card>
         </>
       )}
 
       {/* UNIVERSAL PRODUCTS */}
       {activeTab === "products" && (
         <>
-          <section style={sectionStyle}>
+          <Card as="section" className="lf-admin-panel">
             <h2>
               Existing Universal Products (
               {products.reduce((total, group) => total + group.products.length, 0)})
             </h2>
 
+            <div className="lf-category-filter" role="group" aria-label="Filter products by category">
+              <Button
+                type="button"
+                size="small"
+                variant={selectedProductCategory === null ? "primary" : "secondary"}
+                aria-pressed={selectedProductCategory === null}
+                onClick={() => setSelectedProductCategory(null)}
+              >
+                All categories
+              </Button>
+              {productCategoryOptions.map((category) => (
+                <Button
+                  key={category.id}
+                  type="button"
+                  size="small"
+                  variant={String(selectedProductCategory) === String(category.id) ? "primary" : "secondary"}
+                  aria-pressed={String(selectedProductCategory) === String(category.id)}
+                  onClick={() => setSelectedProductCategory(category.id)}
+                >
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+
             {!loading && products.length === 0 && (
-              <p>No products found yet.</p>
+              <EmptyState title="No products found yet." />
             )}
 
-            {products.length > 0 && (
-              products.map((group) => (
+            {visibleProductGroups.length > 0 && (
+              visibleProductGroups.map((group) => (
                 <div key={group.category_id} style={{ marginTop: 24 }}>
                   <h3>{group.category_name}</h3>
                   <div style={tableWrapperStyle}>
@@ -319,8 +354,8 @@ export default function AdminDashboard() {
                                     }
                                     style={actionButtonsStyle}
                                   >
-                                    <button type="submit" style={smallBtnStyle}>Save</button>
-                                    <button type="button" style={smallSecondaryBtnStyle} onClick={() => setEditingRecord(null)}>Cancel</button>
+                                    <Button type="submit" size="small">Save</Button>
+                                    <Button type="button" variant="outline" size="small" onClick={() => setEditingRecord(null)}>Cancel</Button>
                                   </form>
                                 </td>
                               </>
@@ -330,9 +365,10 @@ export default function AdminDashboard() {
                                 <td style={cellStyle}>{product.description || "—"}</td>
                                 <td style={cellStyle}>
                                   <div style={actionButtonsStyle}>
-                                    <button
+                                    <Button
                                       type="button"
-                                      style={smallSecondaryBtnStyle}
+                                      variant="outline"
+                                      size="small"
                                       onClick={() =>
                                         setEditingRecord({
                                           type: "product",
@@ -344,14 +380,15 @@ export default function AdminDashboard() {
                                       }
                                     >
                                       Edit
-                                    </button>
-                                    <button
+                                    </Button>
+                                    <Button
                                       type="button"
-                                      style={smallDangerBtnStyle}
+                                      variant="danger"
+                                      size="small"
                                       onClick={() => handleDelete("products", product.id, "products", "product")}
                                     >
                                       Delete
-                                    </button>
+                                    </Button>
                                   </div>
                                 </td>
                               </>
@@ -364,9 +401,13 @@ export default function AdminDashboard() {
                 </div>
               ))
             )}
-          </section>
 
-          <section style={sectionStyle}>
+            {!loading && products.length > 0 && visibleProductGroups.length === 0 && (
+              <EmptyState title="No products in this category yet." />
+            )}
+          </Card>
+
+          <Card as="section" className="lf-admin-panel">
             <h2>Add Universal Product Base</h2>
 
             <form
@@ -385,60 +426,55 @@ export default function AdminDashboard() {
                 )
               }
             >
-              <div style={inputGroup}>
-                <label>Product Name</label>
-                <input
-                  name="name"
-                  required
-                  style={inputStyle}
-                  placeholder="e.g. iPhone 15"
-                />
-              </div>
+              <Input
+                label="Product Name"
+                name="name"
+                required
+                style={inputStyle}
+                placeholder="e.g. iPhone 15"
+              />
 
-              <div style={inputGroup}>
-                <label>Description</label>
-                <textarea
-                  name="desc"
-                  required
-                  style={inputStyle}
-                  rows="3"
-                  placeholder="Product description..."
-                />
-              </div>
+              <Input
+                as="textarea"
+                label="Description"
+                name="desc"
+                required
+                style={inputStyle}
+                rows="3"
+                placeholder="Product description..."
+              />
 
-              <div style={inputGroup}>
-                <label>Category</label>
-                <select
-                  name="category_id"
-                  required
-                  style={inputStyle}
-                  defaultValue=""
-                >
+              <Select
+                label="Category"
+                name="category_id"
+                required
+                style={inputStyle}
+                defaultValue=""
+              >
                   <option value="">Select a Category...</option>
                   {categories.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
                     </option>
                   ))}
-                </select>
-              </div>
+              </Select>
 
-              <button type="submit" style={btnStyle}>
+              <Button type="submit" size="large">
                 Create Product Base
-              </button>
+              </Button>
             </form>
-          </section>
+          </Card>
         </>
       )}
 
       {/* GLOBAL DISCOUNTS */}
       {activeTab === "discounts" && (
         <>
-          <section style={sectionStyle}>
+          <Card as="section" className="lf-admin-panel">
             <h2>Existing Global Discounts ({discounts.length})</h2>
 
             {!loading && discounts.length === 0 && (
-              <p>No discount codes found yet.</p>
+              <EmptyState title="No discount codes found yet." />
             )}
 
             {discounts.length > 0 && (
@@ -497,8 +533,8 @@ export default function AdminDashboard() {
                               }
                               style={actionButtonsStyle}
                             >
-                              <button type="submit" style={smallBtnStyle}>Save</button>
-                              <button type="button" style={smallSecondaryBtnStyle} onClick={() => setEditingRecord(null)}>Cancel</button>
+                              <Button type="submit" size="small">Save</Button>
+                              <Button type="button" variant="outline" size="small" onClick={() => setEditingRecord(null)}>Cancel</Button>
                             </form>
                           </td>
                         </>
@@ -508,9 +544,10 @@ export default function AdminDashboard() {
                           <td style={cellStyle}>{discount.percentage}%</td>
                           <td style={cellStyle}>
                             <div style={actionButtonsStyle}>
-                              <button
+                              <Button
                                 type="button"
-                                style={smallSecondaryBtnStyle}
+                                variant="outline"
+                                size="small"
                                 onClick={() =>
                                   setEditingRecord({
                                     type: "discount",
@@ -521,14 +558,15 @@ export default function AdminDashboard() {
                                 }
                               >
                                 Edit
-                              </button>
-                              <button
+                              </Button>
+                              <Button
                                 type="button"
-                                style={smallDangerBtnStyle}
+                                variant="danger"
+                                size="small"
                                 onClick={() => handleDelete("discounts", discount.id, "discounts", "discount")}
                               >
                                 Delete
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </>
@@ -539,9 +577,9 @@ export default function AdminDashboard() {
                 </table>
               </div>
             )}
-          </section>
+          </Card>
 
-          <section style={sectionStyle}>
+          <Card as="section" className="lf-admin-panel">
             <h2>Create Global Discount Code</h2>
 
             <form
@@ -559,85 +597,52 @@ export default function AdminDashboard() {
                 )
               }
             >
-              <div style={inputGroup}>
-                <label>Promo Code</label>
-                <input
-                  name="code"
-                  required
-                  style={inputStyle}
-                  placeholder="e.g. BLACKFRIDAY20"
-                />
-              </div>
+              <Input
+                label="Promo Code"
+                name="code"
+                required
+                style={inputStyle}
+                placeholder="e.g. BLACKFRIDAY20"
+              />
 
-              <div style={inputGroup}>
-                <label>Percentage Off</label>
-                <input
-                  name="percentage"
-                  type="number"
-                  min="0.1"
-                  max="100"
-                  step="0.1"
-                  required
-                  style={inputStyle}
-                  placeholder="e.g. 20"
-                />
-              </div>
+              <Input
+                label="Percentage Off"
+                name="percentage"
+                type="number"
+                min="0.1"
+                max="100"
+                step="0.1"
+                required
+                style={inputStyle}
+                placeholder="e.g. 20"
+              />
 
-              <button type="submit" style={btnStyle}>
+              <Button type="submit" size="large">
                 Create Discount
-              </button>
+              </Button>
             </form>
-          </section>
+          </Card>
         </>
       )}
 
-      {activeTab === "security" && <LoginAuditLog />}
+      {activeTab === "security" && (
+        <Card title="Security Logs">
+          <p>
+            The login audit log is now its own microfrontend.{" "}
+            <Button as="a" href="/admin/security" variant="outline">Open security logs</Button>
+          </p>
+        </Card>
+      )}
       {activeTab === "audit" && <StoreAudit />}
-    </div>
+    </PageContainer>
   );
 }
-
-const pageStyle = {
-  padding: 20,
-  maxWidth: 1100,
-  margin: "40px auto",
-  fontFamily: "sans-serif",
-};
-
-const headingStyle = {
-  borderBottom: "2px solid #000",
-  paddingBottom: 10,
-};
 
 const tabsStyle = {
   display: "flex",
   gap: 10,
   flexWrap: "wrap",
   margin: "20px 0",
-};
-
-const tabStyle = (active) => ({
-  padding: "10px 15px",
-  cursor: "pointer",
-  border: "none",
-  backgroundColor: active ? "#000" : "#eee",
-  color: active ? "#fff" : "#333",
-  borderRadius: 5,
-  fontWeight: "bold",
-});
-
-const sectionStyle = {
-  marginBottom: 30,
-  padding: 20,
-  border: "1px solid #ddd",
-  borderRadius: 8,
-};
-
-const inputGroup = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 6,
-  marginBottom: 15,
 };
 
 const inputStyle = {
@@ -647,17 +652,6 @@ const inputStyle = {
   border: "1px solid #ccc",
   width: "100%",
   boxSizing: "border-box",
-};
-
-const btnStyle = {
-  padding: "12px 20px",
-  backgroundColor: "#000",
-  color: "#fff",
-  border: "none",
-  borderRadius: 5,
-  fontSize: 16,
-  cursor: "pointer",
-  fontWeight: "bold",
 };
 
 const listStyle = {
@@ -688,23 +682,6 @@ const actionButtonsStyle = {
   gap: 8,
 };
 
-const smallBtnStyle = {
-  ...btnStyle,
-  padding: "8px 12px",
-  fontSize: 14,
-};
-
-const smallSecondaryBtnStyle = {
-  ...smallBtnStyle,
-  backgroundColor: "#e9ecef",
-  color: "#333",
-};
-
-const smallDangerBtnStyle = {
-  ...smallBtnStyle,
-  backgroundColor: "#b02a37",
-};
-
 const mutedStyle = {
   color: "#777",
   fontSize: 13,
@@ -725,11 +702,3 @@ const cellStyle = {
   borderBottom: "1px solid #ddd",
   verticalAlign: "top",
 };
-
-const alertStyle = (type) => ({
-  padding: 15,
-  marginBottom: 20,
-  backgroundColor: type === "success" ? "#d4edda" : "#f8d7da",
-  color: type === "success" ? "#155724" : "#721c24",
-  borderRadius: 5,
-});

@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   root "catalog#index"
   get "/products", to: "catalog#index", as: :products
   get "/products/:id", to: "catalog#index", as: :product
+  get "/admin/security", to: "admin_security#show"
 
   get "/favicon.ico", to: redirect("/icon.png")
 

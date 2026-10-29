@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
 import { fetchRequest } from "../../lib/api";
+import { Alert, Button, Card, Input, PageContainer, PageHeader } from "../ui";
 
 export default function CreateStoreProfile() {
   const [formData, setFormData] = useState({
@@ -40,61 +41,27 @@ export default function CreateStoreProfile() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: "600px",
-        margin: "40px auto",
-        padding: "25px",
-        fontFamily: "sans-serif",
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-      }}
-    >
-      <h2 style={{ borderBottom: "2px solid #000", paddingBottom: "10px" }}>
-        Create Store Profile
-      </h2>
+    <PageContainer size="narrow">
+      <Card>
+        <PageHeader title="Create Store Profile" />
 
-      {error && (
-        <div
-          role="alert"
-          style={{
-            color: "#721c24",
-            backgroundColor: "#f8d7da",
-            padding: "12px",
-            borderRadius: "4px",
-            marginBottom: "20px",
-          }}
-        >
-          {error}
-        </div>
-      )}
+        {error && <Alert>{error}</Alert>}
 
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-      >
-        <div>
-          <label htmlFor="name" style={{ fontWeight: "bold" }}>
-            Store Name
-          </label>
-          <input
+        <form onSubmit={handleSubmit} className="lf-form-stack">
+          <Input
             id="name"
+            label="Store Name"
             name="name"
             type="text"
             value={formData.name}
             onChange={handleChange}
             placeholder="Enter store name"
             required
-            style={inputStyle}
           />
-        </div>
 
-        <div>
-          <label htmlFor="slug" style={{ fontWeight: "bold" }}>
-            URL Slug (e.g. techhub-downtown)
-          </label>
-          <input
+          <Input
             id="slug"
+            label="URL Slug (e.g. techhub-downtown)"
             name="slug"
             type="text"
             value={formData.slug}
@@ -103,51 +70,24 @@ export default function CreateStoreProfile() {
             required
             pattern="[a-zA-Z0-9-]+"
             title="Use letters, numbers, and hyphens only."
-            style={inputStyle}
           />
-        </div>
 
-        <div>
-          <label htmlFor="address" style={{ fontWeight: "bold" }}>
-            Store Address
-          </label>
-          <textarea
+          <Input
+            as="textarea"
             id="address"
+            label="Store Address"
             name="address"
             rows="3"
             value={formData.address}
             onChange={handleChange}
             placeholder="Enter store address"
-            style={inputStyle}
           />
-        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            padding: "12px",
-            background: "#000",
-            color: "#fff",
-            border: "none",
-            borderRadius: "4px",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Saving..." : "Save Store Profile"}
-        </button>
-      </form>
-    </div>
+          <Button type="submit" loading={loading}>
+            {loading ? "Saving..." : "Save Store Profile"}
+          </Button>
+        </form>
+      </Card>
+    </PageContainer>
   );
 }
-
-const inputStyle = {
-  display: "block",
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "10px",
-  marginTop: "6px",
-  border: "1px solid #ccc",
-  borderRadius: "4px",
-  fontSize: "14px",
-};
