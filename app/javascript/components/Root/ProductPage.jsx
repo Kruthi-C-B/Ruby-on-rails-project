@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchGet, addToCart } from "../../lib/api";
+import { Alert, Badge, Button, Card, EmptyState, PageContainer, PageHeader, Section, Spinner } from "../ui";
 
 function StockLabel({ stock }) {
-  if (stock === 0) return <span className="stock stock-out">Out of Stock</span>;
-  if (stock <= 10) return <span className="stock stock-low">Only a few left!</span>;
-  return <span className="stock stock-ok">In Stock</span>;
+  if (stock === 0) return <Badge variant="danger">Out of Stock</Badge>;
+  if (stock <= 10) return <Badge variant="warning">Only a few left!</Badge>;
+  return <Badge variant="success">In Stock</Badge>;
 }
 
 export default function ProductPage() {
@@ -39,27 +40,24 @@ export default function ProductPage() {
   };
 
   if (error) {
-    return (
-      <p role="alert" className="catalog-error">
-        {error}
-      </p>
-    );
+    return <PageContainer><Alert>{error}</Alert></PageContainer>;
   }
-  if (!product) return <p>Loading product…</p>;
+  if (!product) return <PageContainer><Spinner label="Loading product…" /></PageContainer>;
 
   return (
-    <div>
-      <Link to="/">← All products</Link>
-      <h1>{product.name}</h1>
-      <p>
-        <strong>Category:</strong> {product.category}
-      </p>
-      <p>{product.description}</p>
+    <PageContainer>
+      <PageHeader
+        title={product.name}
+        description={product.description}
+        action={<Button as={Link} to="/" variant="outline">← All products</Button>}
+      />
+      <p><strong>Category:</strong> {product.category}</p>
 
-      <h2>Cross-Store Price &amp; Stock Comparison</h2>
+      <Section title="Cross-Store Price &amp; Stock Comparison">
       {product.listings.length === 0 ? (
-        <p>No stores are currently selling this product.</p>
+        <EmptyState title="No stores are selling this product yet." />
       ) : (
+        <div className="lf-table-scroll">
         <table className="compare-table" style={{ width: "100%", textAlign: "left", marginBottom: "40px" }}>
           <thead>
             <tr>
@@ -85,33 +83,26 @@ export default function ProductPage() {
                 {/* Only show the Add to Cart cell if not an admin */}
                 {!isAdmin && (
                   <td>
-                    <button 
+                    <Button
+                      size="small"
                       onClick={() => handleAddToCart(listing.listingReferenceId)}
                       disabled={listing.stock === 0}
-                      style={{
-                        padding: "6px 12px",
-                        cursor: listing.stock === 0 ? "not-allowed" : "pointer",
-                        opacity: listing.stock === 0 ? 0.5 : 1,
-                        background: listing.stock === 0 ? "#ccc" : "#000",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "4px"
-                      }}
                     >
                       Add to Cart
-                    </button>
+                    </Button>
                   </td>
                 )}
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
       )}
+      </Section>
 
       {/* MySQL Clustering Recommendations Section */}
       {product.recommendations && product.recommendations.length > 0 && (
-        <div style={{ marginTop: "40px", padding: "20px", background: "#f9f9f9", borderRadius: "8px" }}>
-          <h3 style={{ marginTop: 0 }}>Frequently Bought Together</h3>
+        <Card title="Frequently Bought Together" variant="muted" className="lf-recommendations">
           <ul style={{ listStyleType: "none", padding: 0, margin: 0 }}>
             {product.recommendations.map((rec) => (
               <li key={rec.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #ddd" }}>
@@ -123,19 +114,20 @@ export default function ProductPage() {
                   <span>${Number(rec.price).toFixed(2)}</span>
                   {/* Hide recommendation cart buttons from admins too */}
                   {!isAdmin && (
-                    <button 
+                    <Button
+                      variant="secondary"
+                      size="small"
                       onClick={() => handleAddToCart(rec.listingReferenceId)}
-                      style={{ padding: "6px 12px", cursor: "pointer", background: "#eee", border: "1px solid #ccc", borderRadius: "4px" }}
                     >
                       Add to Cart
-                    </button>
+                    </Button>
                   )}
                 </div>
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
       )}
-    </div>
+    </PageContainer>
   );
 }

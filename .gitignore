@@ -37,6 +37,8 @@
 /public/packs
 /public/packs-test
 /node_modules
+mfe/login-audit/node_modules/
+mfe/login-audit/dist/
 /yarn-error.log
 yarn-debug.log*
 .yarn-integrity

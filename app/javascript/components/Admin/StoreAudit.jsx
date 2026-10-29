@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from "react";
 import { fetchGet } from "../../lib/api";
+import { Alert, EmptyState, PageHeader, Spinner } from "../ui";
 
 export default function StoreAudit() {
   const [auditData, setAuditData] = useState([]);
@@ -20,21 +21,21 @@ export default function StoreAudit() {
   }, []);
 
   if (loading) {
-    return <p>Loading store audit records...</p>;
+    return <Spinner label="Loading store audit records…" />;
   }
 
   if (error) {
-    return <p style={{ color: "red" }}>{error}</p>;
+    return <Alert>{error}</Alert>;
   }
 
   return (
     <div>
-      <h2>Store Product Listing Audit</h2>
-      <p>
-        Review product listing changes made by store owners across LocalFind.
-      </p>
+      <PageHeader
+        title="Store Product Listing Audit"
+        description="Review product listing changes made by store owners across LocalFind."
+      />
 
-      <div style={{ overflowX: "auto" }}>
+      <div className="lf-table-scroll">
         <table
           style={{
             width: "100%",
@@ -86,12 +87,9 @@ export default function StoreAudit() {
               ))
             ) : (
               <tr>
-                <td
-                  colSpan="7"
-                  style={{ textAlign: "center", padding: "20px" }}
-                >
-                  No product listing changes recorded yet.
-                </td>
+              <td colSpan="7">
+                <EmptyState title="No product listing changes recorded yet." />
+              </td>
               </tr>
             )}
           </tbody>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect} from "react";
 import { fetchGet, fetchRequest } from "../../lib/api";
+import { Alert, Button, Card, EmptyState, Input, Modal, PageContainer, PageHeader, Section, Select, Spinner } from "../ui";
 
 export default function StoreOwnerDashboard() {
   // --- Core State ---
@@ -110,152 +111,124 @@ export default function StoreOwnerDashboard() {
     }
   };
 
-  if (loading) return <p style={{ padding: "20px" }}>Loading your dashboard...</p>;
+  if (loading) return <PageContainer><Spinner label="Loading your dashboard…" /></PageContainer>;
 
   return (
-
-    <div style={{ padding: "20px", maxWidth: "900px", margin: "40px auto", fontFamily: "sans-serif" }}>
-
-      {/* --- HEADER (Matches index.html.erb) --- */}
-      <h1 style={{ borderBottom: "2px solid #000", paddingBottom: "10px" }}>
-        {tenant?.name || "Your Store"} — Admin Dashboard
-      </h1>
-      <p><strong>Address:</strong> {tenant?.address || "No address provided"}</p>
-      <p>
-        <a href="/tenant/edit" style={{ color: "#007bff", textDecoration: "none" }}>Edit Store Profile</a>
-      </p>
+    <PageContainer className="lf-store-owner-page">
+      <PageHeader
+        title={`${tenant?.name || "Your Store"} — Admin Dashboard`}
+        description={`Address: ${tenant?.address || "No address provided"}`}
+        action={<Button as="a" href="/tenant/edit" variant="outline">Edit Store Profile</Button>}
+      />
 
       <hr style={{ margin: "30px 0", border: "none", borderTop: "2px solid #eee" }} />
 
       {/* --- ADD / EDIT FORMS --- */}
       {formMode === "add" && (
-        <div style={{ padding: "20px", background: "#f9f9f9", border: "1px solid #ddd", borderRadius: "5px", marginBottom: "20px" }}>
-          <h2 style={{ marginTop: 0 }}>Add Product to Store Listing</h2>
+        <Modal open onClose={handleCloseForm} title="Add Product to Store Listing">
+          {formError && <Alert title="Unable to add product">{formError}</Alert>}
           
-          {formError && (
-            <div style={{ backgroundColor: "#f8d7da", color: "#721c24", padding: "12px", borderRadius: "4px", marginBottom: "20px" }}>
-              <strong>Unable to add product:</strong> {formError}
-            </div>
-          )}
-          
-          <form onSubmit={handleSaveListing} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-            <div>
-              <label style={{ display: "block", fontWeight: "bold", marginBottom: "5px" }}>Select Category</label>
-              <select 
-                value={selectedCategory} 
+          <form onSubmit={handleSaveListing} className="lf-form-stack">
+            <Select
+                label="Select Category"
+                value={selectedCategory}
                 onChange={(e) => {
                   setSelectedCategory(e.target.value);
                   setFormData({ ...formData, product_id: "" });
                 }}
                 required
-                style={{ padding: "8px", width: "100%", maxWidth: "400px" }}
               >
                 <option value="">Choose a Category...</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
+            </Select>
 
-            <div>
-              <label style={{ display: "block", fontWeight: "bold", marginBottom: "5px" }}>2. Select Product from Catalog</label>
+            <Select
+              label="2. Select Product from Catalog"
+              value={formData.product_id}
+              onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
+              required={availableProducts.length > 0}
+              disabled={availableProducts.length === 0}
+            >
               {availableProducts.length > 0 ? (
-                <select 
-                  value={formData.product_id} 
-                  onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
-                  required
-                  style={{ padding: "8px", width: "100%", maxWidth: "400px" }}
-                >
+                <>
                   <option value="">Select a product</option>
                   {availableProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                </>
               ) : (
-                <select disabled style={{ padding: "8px", width: "100%", maxWidth: "400px", backgroundColor: "#eee" }}>
-                  <option>Please select a category first...</option>
-                </select>
+                <option value="">Please select a category first...</option>
               )}
-            </div>
+            </Select>
 
-            <div>
-              <label style={{ display: "block", fontWeight: "bold", marginBottom: "5px" }}>Store Price ($)</label>
-              <input 
+            <Input
+                label="Store Price ($)"
                 type="number" step="0.01" min="0" required
-                value={formData.price} 
+                value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                style={{ padding: "8px", width: "150px" }}
+                style={{ maxWidth: "220px" }}
               />
-            </div>
 
-            <div>
-              <label style={{ display: "block", fontWeight: "bold", marginBottom: "5px" }}>Stock Quantity</label>
-              <input 
+            <Input
+                label="Stock Quantity"
                 type="number" min="0" required
-                value={formData.stock_quantity} 
+                value={formData.stock_quantity}
                 onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                style={{ padding: "8px", width: "150px" }}
+                style={{ maxWidth: "220px" }}
               />
-            </div>
 
-            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-              <button type="submit" style={{ padding: "9px 15px", background: "#000", color: "#fff", cursor: "pointer", border: "none", borderRadius: "3px" }}>
-                Add to Store
-              </button>
-              <button type="button" onClick={handleCloseForm} style={{ padding: "9px 15px", cursor: "pointer", color: "#007bff", textDecoration: "underline", background: "none", border: "none" }}>
-                Cancel
-              </button>
+            <div className="lf-form-actions">
+              <Button type="submit">Add to Store</Button>
+              <Button type="button" variant="outline" onClick={handleCloseForm}>Cancel</Button>
             </div>
           </form>
-        </div>
+        </Modal>
       )}
 
       {formMode === "edit" && editingListing && (
-        <div style={{ padding: "20px", background: "#f9f9f9", border: "1px solid #ddd", borderRadius: "5px", marginBottom: "20px" }}>
-          <h2 style={{ marginTop: 0 }}>Edit Listing for {editingListing.product?.name}</h2>
-          
-          {formError && <p style={{ color: "red" }}>{formError}</p>}
-          
-          <form onSubmit={handleSaveListing} style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-            <div>
-              <label style={{ display: "block", fontWeight: "bold", marginBottom: "5px" }}>Store Price ($)</label>
-              <input 
+        <Modal
+          open
+          onClose={handleCloseForm}
+          title={`Edit Listing for ${editingListing.product?.name}`}
+        >
+          {formError && <Alert>{formError}</Alert>}
+
+          <form onSubmit={handleSaveListing} className="lf-form-stack">
+            <Input
+                label="Store Price ($)"
                 type="number" step="0.01" min="0" required
-                value={formData.price} 
+                value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                style={{ padding: "8px", width: "150px" }}
+                style={{ maxWidth: "220px" }}
               />
-            </div>
 
-            <div>
-              <label style={{ display: "block", fontWeight: "bold", marginBottom: "5px" }}>Stock Quantity</label>
-              <input 
+            <Input
+                label="Stock Quantity"
                 type="number" min="0" required
-                value={formData.stock_quantity} 
+                value={formData.stock_quantity}
                 onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-                style={{ padding: "8px", width: "150px" }}
+                style={{ maxWidth: "220px" }}
               />
-            </div>
 
-            <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-              <button type="submit" style={{ padding: "9px 15px", background: "#000", color: "#fff", cursor: "pointer", border: "none", borderRadius: "3px" }}>
-                Update Listing
-              </button>
-              <button type="button" onClick={handleCloseForm} style={{ padding: "9px 15px", cursor: "pointer", color: "#007bff", textDecoration: "underline", background: "none", border: "none" }}>
-                Cancel
-              </button>
+            <div className="lf-form-actions">
+              <Button type="submit">Update Listing</Button>
+              <Button type="button" variant="outline" onClick={handleCloseForm}>Cancel</Button>
             </div>
           </form>
-        </div>
+        </Modal>
       )}
 
       {/* --- STORE INVENTORY TABLE --- */}
       {formMode === "none" && (
         <>
-          <h2 style={{ marginBottom: "15px" }}>Store Product Inventory</h2>
-          
-          <button 
-            onClick={handleOpenAdd} 
-            style={{ background: "green", color: "white", padding: "8px 12px", border: "none", borderRadius: "4px", cursor: "pointer", textDecoration: "none", marginBottom: "20px", display: "inline-block" }}>
-            + Add Product from Catalog
-          </button>
+          <Section
+            title="Store Product Inventory"
+            actions={
+              <Button onClick={handleOpenAdd} variant="success">
+                + Add Product from Catalog
+              </Button>
+            }
+          >
 
+          <div className="lf-table-scroll">
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", marginBottom: "40px" }} border="1" cellPadding="10" cellSpacing="0">
             <thead style={{ backgroundColor: "#f9f9f9" }}>
               <tr>
@@ -275,30 +248,37 @@ export default function StoreOwnerDashboard() {
                     <td>${parseFloat(listing.price).toFixed(2)}</td>
                     <td>{listing.stock_quantity}</td>
                     <td>
-                      <button 
-                        onClick={() => handleOpenEdit(listing)} 
-                        style={{ color: "#007bff", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0, marginRight: "5px" }}
+                      <Button
+                        variant="outline"
+                        size="small"
+                        onClick={() => handleOpenEdit(listing)}
                       >
                         Edit Price/Stock
-                      </button> | 
-                      <button 
-                        onClick={() => handleDeleteListing(listing.id)} 
-                        style={{ color: "red", background: "none", border: "none", cursor: "pointer", padding: 0, marginLeft: "5px" }}
+                      </Button>
+                      {" "}
+                      <Button
+                        variant="danger"
+                        size="small"
+                        onClick={() => handleDeleteListing(listing.id)}
                       >
                         Remove
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="5" style={{ padding: "15px", color: "#666", textAlign: "left" }}>
-                    No products listed in your store yet. Click "+ Add Product from Catalog" above.
+                  <td colSpan="5">
+                    <EmptyState title="No products listed yet">
+                      Add a product from the catalog to begin.
+                    </EmptyState>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
+          </Section>
 
           <hr style={{ margin: "40px 0", border: "none", borderTop: "2px solid #eee" }} />
 
@@ -308,47 +288,24 @@ export default function StoreOwnerDashboard() {
 
 {auditData && auditData.metrics ? (
   <>
-    <div
-      style={{
-        display: "flex",
-        gap: "20px",
-        marginBottom: "20px",
-        flexWrap: "wrap",
-      }}
-    >
-      <div
-        style={{
-          padding: "20px",
-          background: "#f0f8ff",
-          borderRadius: "8px",
-          flex: 1,
-          border: "1px solid #b6d4fe",
-        }}
-      >
+    <div className="lf-metric-grid">
+      <Card variant="muted" className="lf-metric-card">
         <h4 style={{ margin: 0, color: "#004085" }}>
           Orders Containing Your Products
         </h4>
-        <p style={{ fontSize: "2em", fontWeight: "bold", color: "#004085" }}>
+        <p className="lf-metric-card__value">
           {auditData.metrics.total_ordered}
         </p>
-      </div>
+      </Card>
 
-      <div
-        style={{
-          padding: "20px",
-          background: "#f0f8ff",
-          borderRadius: "8px",
-          flex: 1,
-          border: "1px solid #b6d4fe",
-        }}
-      >
+      <Card variant="muted" className="lf-metric-card">
         <h4 style={{ margin: 0, color: "#004085" }}>
           Items Purchased From Your Store
         </h4>
-        <p style={{ fontSize: "2em", fontWeight: "bold", color: "#004085" }}>
+        <p className="lf-metric-card__value">
           {auditData.metrics.total_items || 0}
         </p>
-      </div>
+      </Card>
     </div>
 
     <h3>Product Purchase History</h3>
@@ -404,15 +361,8 @@ export default function StoreOwnerDashboard() {
             ))
           ) : (
             <tr>
-              <td
-                colSpan="6"
-                style={{
-                  padding: "15px",
-                  color: "#666",
-                  textAlign: "center",
-                }}
-              >
-                No completed purchases for your store yet.
+              <td colSpan="7">
+                <EmptyState title="No completed purchases for your store yet." />
               </td>
             </tr>
           )}
@@ -421,11 +371,11 @@ export default function StoreOwnerDashboard() {
     </div>
   </>
 ) : (
-  <p>Loading purchase history...</p>
+  <Spinner label="Loading purchase history…" />
 )}
 
         </>
       )}
-    </div>
+    </PageContainer>
   );
 }

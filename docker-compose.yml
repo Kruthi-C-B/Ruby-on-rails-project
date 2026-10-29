@@ -34,5 +34,16 @@ services:
     depends_on:
       - db
 
+  login-audit:
+    image: node:22
+    working_dir: /mfe
+    command: bash -c "npm install && npm start"
+    volumes:
+      - ./mfe/login-audit:/mfe
+      - login_audit_node_modules:/mfe/node_modules
+    ports:
+      - "8500:8500"
+
 volumes:
   mysql_data:
+  login_audit_node_modules:
