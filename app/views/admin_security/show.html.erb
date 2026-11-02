@@ -25,7 +25,10 @@
         app: function () {
           return System.import("@localfind/login-audit");
         },
-        activeWhen: "/admin/security"
+        activeWhen: "/localFind/admin/security",
+        customProps: {
+          auditApiUrl: <%= raw(json_escape(ENV.fetch("AUDIT_API_URL", "http://127.0.0.1:3100").to_json)) %>
+        }
       });
       singleSpa.start();
     })

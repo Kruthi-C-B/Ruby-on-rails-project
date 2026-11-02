@@ -1,22 +1,35 @@
 import React, { useEffect, useState } from "react";
 
-function fetchGet(url) {
-  return fetch(url, { headers: { Accept: "application/json" } }).then((response) =>
-    response.ok
-      ? response.json()
-      : Promise.reject(new Error(`Request failed (${response.status})`))
-  );
+async function fetchAudits(auditApiUrl) {
+  const tokenResponse = await fetch("/api/v1/auth/token", {
+    headers: { Accept: "application/json" },
+  });
+  if (!tokenResponse.ok) {
+    throw new Error(`Token request failed (${tokenResponse.status})`);
+  }
+  const { token } = await tokenResponse.json();
+
+  const response = await fetch(`${auditApiUrl}/api/v1/login_audits`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Audit request failed (${response.status})`);
+  }
+  return response.json();
 }
 
-export default function LoginAuditLog() {
+export default function LoginAuditLog({ auditApiUrl }) {
   const [logs, setLogs] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchGet("/api/v1/admin/login_audits")
+    fetchAudits(auditApiUrl)
       .then(setLogs)
       .catch((err) => setError(err.message));
-  }, []);
+  }, [auditApiUrl]);
 
   if (error) return <p style={{ color: "red" }}>Error loading audit logs: {error}</p>;
   if (!logs) return <p>Loading…</p>;

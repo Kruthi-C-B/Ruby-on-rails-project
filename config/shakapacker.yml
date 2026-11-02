@@ -121,9 +121,8 @@ development:
   compile: true
   compiler_strategy: mtime
 
-  # Disable content hashes in development for faster builds
-  # https://webpack.js.org/guides/caching/
-  useContentHash: false
+  # Version development assets so browsers do not keep stale route bundles.
+  useContentHash: true
 
   # Early hints disabled by default in development
   # To enable: Set enabled: true AND start Puma with: bundle exec puma --early-hints

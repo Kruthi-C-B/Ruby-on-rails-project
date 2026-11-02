@@ -144,6 +144,8 @@ GEM
       actionview (>= 7.0.0)
       activesupport (>= 7.0.0)
     json (3.1.0)
+    jwt (3.3.0)
+      base64
     kamal (2.12.0)
       activesupport (>= 7.0)
       base64 (~> 0.2)
@@ -415,6 +417,7 @@ DEPENDENCIES
   debug
   image_processing (~> 1.2)
   jbuilder
+  jwt (~> 3.3)
   kamal
   mysql2 (~> 0.5)
   paper_trail

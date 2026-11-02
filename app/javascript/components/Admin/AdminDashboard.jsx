@@ -629,7 +629,7 @@ export default function AdminDashboard() {
         <Card title="Security Logs">
           <p>
             The login audit log is now its own microfrontend.{" "}
-            <Button as="a" href="/admin/security" variant="outline">Open security logs</Button>
+            <Button as="a" href="/localFind/admin/security" variant="outline">Open security logs</Button>
           </p>
         </Card>
       )}

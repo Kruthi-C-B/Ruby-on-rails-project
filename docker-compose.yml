@@ -31,6 +31,25 @@ services:
       - .:/app
     ports:
       - "3000:3000"
+    environment:
+      AUDIT_API_KEY: ${AUDIT_API_KEY:?Set AUDIT_API_KEY in .env}
+      AUDIT_API_URL: ${AUDIT_API_URL:-http://127.0.0.1:3100}
+    depends_on:
+      - db
+
+  audit-api:
+    build:
+      context: ./services/audit-api
+      dockerfile: Dockerfile.dev
+    command: bash -c "bundle install && rm -f tmp/pids/server.pid && bundle exec rails server -b 0.0.0.0 -p 3100"
+    volumes:
+      - ./services/audit-api:/app
+      - audit_api_bundle:/usr/local/bundle
+    environment:
+      AUDIT_API_KEY: ${AUDIT_API_KEY:?Set AUDIT_API_KEY in .env}
+      ALLOWED_ORIGINS: http://127.0.0.1:3000,http://localhost:3000
+    ports:
+      - "3100:3100"
     depends_on:
       - db
 
@@ -47,3 +66,4 @@ services:
 volumes:
   mysql_data:
   login_audit_node_modules:
+  audit_api_bundle:

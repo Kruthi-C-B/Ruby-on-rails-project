@@ -31,7 +31,7 @@ class ApplicationController < ActionController::Base
 
     if logged_in? && current_tenant.nil?
       flash[:alert] = "Please create a store profile first."
-      redirect_to new_tenant_path
+      redirect_to "/localFind/tenant"
     end
   end
 end

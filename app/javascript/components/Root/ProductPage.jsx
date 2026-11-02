@@ -49,7 +49,7 @@ export default function ProductPage() {
       <PageHeader
         title={product.name}
         description={product.description}
-        action={<Button as={Link} to="/" variant="outline">← All products</Button>}
+        action={<Button as={Link} to="/localFind/products" variant="outline">← All products</Button>}
       />
       <p><strong>Category:</strong> {product.category}</p>
 

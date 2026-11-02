@@ -31,7 +31,7 @@ export default function EditStoreProfile() {
     try {
       // Send the update to the new JSON API endpoint
       await fetchRequest("/api/v1/users/store_owners/tenant", "PUT", { tenant: formData });
-      history.push("/product_listings"); // Redirect back to dashboard on success
+      history.push("/localFind/product_listings"); // Redirect back to dashboard on success
     } catch (err) {
       setError(err.message || "Failed to update store profile.");
     }
@@ -76,7 +76,7 @@ export default function EditStoreProfile() {
           <Button type="submit">
             Update Profile
           </Button>
-          <Button as={Link} to="/product_listings" variant="outline">
+          <Button as={Link} to="/localFind/product_listings" variant="outline">
             Cancel
           </Button>
         </div>

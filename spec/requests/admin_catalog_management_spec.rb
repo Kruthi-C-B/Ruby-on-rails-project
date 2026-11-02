@@ -15,7 +15,7 @@ RSpec.describe "Platform admin catalog management", type: :request do
     discount_id = nil
     cart = nil
 
-    post "/login", params: { email: admin.email, password: "password123" }
+    post "/localFind/login", params: { email: admin.email, password: "password123" }
     expect(response).to have_http_status(:redirect)
 
     post "/api/v1/admin/categories", params: { category: { name: "CRUD Category" } }

@@ -1,0 +1,9 @@
+/.bundle
+/config/master.key
+/config/credentials/*.key
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/vendor/bundle
+/coverage

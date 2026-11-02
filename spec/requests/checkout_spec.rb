@@ -210,7 +210,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
   end
 
   def login(user)
-    post "/login", params: { email: user.email, password: "password123" }
+    post "/localFind/login", params: { email: user.email, password: "password123" }
     expect(response).to have_http_status(:redirect)
   end
 

@@ -72,5 +72,6 @@ gem "react-rails", "~> 3.3"
 
 gem "paper_trail"
 gem "ros-apartment", require: "apartment"
+gem "jwt", "~> 3.3"
 
 gem "simplecov", "~> 1.3", :group => :test

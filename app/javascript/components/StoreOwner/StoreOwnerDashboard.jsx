@@ -118,7 +118,7 @@ export default function StoreOwnerDashboard() {
       <PageHeader
         title={`${tenant?.name || "Your Store"} — Admin Dashboard`}
         description={`Address: ${tenant?.address || "No address provided"}`}
-        action={<Button as="a" href="/tenant/edit" variant="outline">Edit Store Profile</Button>}
+        action={<Button as="a" href="/localFind/tenant/edit" variant="outline">Edit Store Profile</Button>}
       />
 
       <hr style={{ margin: "30px 0", border: "none", borderTop: "2px solid #eee" }} />

@@ -32,7 +32,7 @@ export default function CreateStoreProfile() {
         tenant: formData,
       });
 
-      history.push("/product_listings");
+      history.push("/localFind/product_listings");
     } catch (err) {
       setError(err.message || "Failed to create store profile.");
     } finally {
