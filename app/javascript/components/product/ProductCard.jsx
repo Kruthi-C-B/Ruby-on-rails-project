@@ -14,7 +14,7 @@ export default function ProductCard({ product, image, price }) {
       description={product.description}
       image={imageContent}
       footer={
-        <Button as={Link} to={`/products/${product.id}`} variant="outline">
+        <Button as={Link} to={`/localFind/products/${product.id}`} variant="outline">
           Compare Prices
         </Button>
       }

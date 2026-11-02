@@ -12,7 +12,7 @@ def create
 
     # Route them based on their radio button choice
     if params[:account_type] == "owner"
-        redirect_to "/tenant", notice: "Account created! Now set up your store profile."
+        redirect_to "/localFind/tenant", notice: "Account created! Now set up your store profile."
     else
         redirect_to products_path, notice: "Account created successfully! Welcome to the catalog."
     end

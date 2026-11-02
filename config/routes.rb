@@ -1,9 +1,12 @@
 Rails.application.routes.draw do
   # React pages: Rails sends the same page, React Router picks the screen
-  root "catalog#index"
-  get "/products", to: "catalog#index", as: :products
-  get "/products/:id", to: "catalog#index", as: :product
-  get "/admin/security", to: "admin_security#show"
+  root to: redirect("/localFind")
+  get "/localFind", to: "catalog#index", as: :local_find
+  get "/localFind/products", to: "catalog#index", as: :products
+  get "/localFind/products/:id", to: "catalog#index", as: :product
+  get "/localFind/admin/security", to: "admin_security#show"
+  get "/admin/dashboard", to: redirect("/localFind/admin/dashboard")
+  get "/admin/security", to: redirect("/localFind/admin/security")
 
   get "/favicon.ico", to: redirect("/icon.png")
 
@@ -11,6 +14,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get "me", to: "users#me"
+      get "auth/token", to: "auth_tokens#show"
       resources :categories, only: :index
       resources :products, only: %i[index show]
       resources :discounts, only: [ :index ]
@@ -19,7 +23,6 @@ Rails.application.routes.draw do
         resources :categories, only: [ :create, :update, :destroy ]
         resources :products, only: [ :index, :create, :update, :destroy ]
         resources :discounts, only: [ :index, :create, :update, :destroy ]
-        resources :login_audits, only: [ :index ]
         get :cart_metrics, to: "cart_metrics#index"
         get :users, to: "platform#users"
         get :stores, to: "platform#stores"
@@ -51,18 +54,18 @@ Rails.application.routes.draw do
   end
 
   # 1. Admin Authentication Routes
-  get    "/signup", to: "registrations#new"
-  post   "/signup", to: "registrations#create"
-  get    "/login",  to: "sessions#new"
-  post   "/login",  to: "sessions#create"
-  delete "/logout", to: "sessions#destroy"
+  get    "/localFind/signup", to: "registrations#new", as: :signup
+  post   "/localFind/signup", to: "registrations#create"
+  get    "/localFind/login",  to: "sessions#new", as: :login
+  post   "/localFind/login",  to: "sessions#create"
+  delete "/localFind/logout", to: "sessions#destroy", as: :logout
 
   # 2. Single Tenant Admin Store Profile Routes
   # Uses 'resource' (singular) because 1 user admin manages only 1 store profile
 
 
-  # Catch-all route: Send all other HTML requests to React
-  get "*path", to: "catalog#index", constraints: ->(request) do
+  # Send remaining /localFind HTML routes to React for client-side routing.
+  get "/localFind/*path", to: "catalog#index", constraints: ->(request) do
     !request.xhr? && request.format.html?
   end
 end

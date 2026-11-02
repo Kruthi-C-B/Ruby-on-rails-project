@@ -17,19 +17,19 @@ class SessionsController < ApplicationController
 
       # 1. Platform Owner (Super Admin) Logic
       if user.is_admin?
-        redirect_to "/admin/dashboard", notice: "Welcome to the Platform Admin Dashboard!"
+        redirect_to "/localFind/admin/dashboard", notice: "Welcome to the Platform Admin Dashboard!"
 
       # 2. Existing Store Owner (Tenant) Logic
       elsif params[:admin_login] == "true" || user.tenant.present?
         if user.tenant.present?
-          redirect_to root_path, notice: "Welcome back to your store dashboard!"
+          redirect_to local_find_path, notice: "Welcome back to your store dashboard!"
         else
-          redirect_to new_tenant_path, notice: "Please set up your store profile."
+          redirect_to "/localFind/tenant", notice: "Please set up your store profile."
         end
 
       # 3. Regular Shopper Logic
       else
-        redirect_to root_path, notice: "Logged in successfully!"
+        redirect_to local_find_path, notice: "Logged in successfully!"
       end
 
     elsif user
@@ -63,6 +63,6 @@ class SessionsController < ApplicationController
 
   def destroy
     session[:user_id] = nil
-    redirect_to root_path, notice: "Logged out successfully!"
+    redirect_to local_find_path, notice: "Logged out successfully!"
   end
 end

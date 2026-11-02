@@ -1,46 +1,49 @@
 import React from "react";
-import { Route, Switch } from "react-router-dom";
+import { Redirect, Route, Switch } from "react-router-dom";
 import CatalogPage from "./CatalogPage";
 import ProductPage from "./ProductPage";
 import CartPage from "./CartPage";
 import AdminDashboard from "../Admin/AdminDashboard";
-import StoreOwnerDashboard from "../StoreOwner/StoreOwnerDashboard"; // <-- Add this import
+import StoreOwnerDashboard from "../StoreOwner/StoreOwnerDashboard";
 import EditStoreProfile from "../StoreOwner/EditStoreProfile";
-import "./catalog.css";
 import CreateStoreProfile from "../StoreOwner/CreateStoreProfile";
+import "./catalog.css";
 
 export default function App({ storeName }) {
   return (
     <Switch>
-      <Route exact path={["/", "/products"]}>
+      <Route exact path={["/localFind", "/localFind/products"]}>
         <CatalogPage storeName={storeName} />
       </Route>
-      <Route path="/products/:id">
+
+      <Route exact path="/localFind/products/:id">
         <ProductPage />
       </Route>
-      <Route path="/cart">
+
+      <Route exact path="/localFind/cart">
         <CartPage />
       </Route>
-      
-      {/* Explicit route for Store Owners */}
-      <Route path="/product_listings">
+
+      <Route exact path="/localFind/product_listings">
         <StoreOwnerDashboard />
       </Route>
 
-       <Route exact path="/tenant">
+      <Route exact path="/localFind/tenant">
         <CreateStoreProfile />
       </Route>
 
-      <Route path="/tenant/edit">
-         <EditStoreProfile />
+      <Route exact path="/localFind/tenant/edit">
+        <EditStoreProfile />
       </Route>
 
-      {/* Explicit route for Platform Admin */}
-      <Route path="/admin/dashboard">
+      <Route exact path="/localFind/admin/dashboard">
         <AdminDashboard />
       </Route>
 
-      {/* True Catch-all for missing pages */}
+      <Route exact path="/admin/dashboard">
+        <Redirect to="/localFind/admin/dashboard" />
+      </Route>
+
       <Route>
         <p>Page not found.</p>
       </Route>
