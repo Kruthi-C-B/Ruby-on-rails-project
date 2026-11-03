@@ -16,6 +16,12 @@ Rails.application.routes.draw do
     namespace :v1 do
       get "me", to: "users#me"
       get "auth/token", to: "auth_tokens#show"
+      namespace :internal do
+        namespace :admin do
+          get :product_references, to: "tenant_data#product_references"
+          get :audit_trail, to: "tenant_data#audit_trail"
+        end
+      end
       resources :categories, only: :index
       resources :products, only: %i[index show]
       resources :discounts, only: [ :index ]

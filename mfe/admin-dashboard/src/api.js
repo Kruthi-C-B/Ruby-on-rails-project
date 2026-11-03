@@ -1,14 +1,33 @@
+const TOKEN_REFRESH_INTERVAL = 4 * 60 * 1000;
+let cachedToken;
+let tokenExpiresAt = 0;
+let tokenRequest;
+
 async function getToken() {
-  const response = await fetch("/api/v1/auth/token", {
-    headers: { Accept: "application/json" },
-    credentials: "same-origin",
-  });
-  if (!response.ok) {
-    const data = await response.json().catch(() => null);
-    throw new Error(errorMessage(data, response.status, "Authentication failed"));
+  if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
+  if (tokenRequest) return tokenRequest;
+
+  tokenRequest = (async () => {
+    const response = await fetch("/api/v1/auth/token?service=admin-dashboard-api", {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+    });
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(errorMessage(data, response.status, "Authentication failed"));
+    }
+
+    const { token } = await response.json();
+    cachedToken = token;
+    tokenExpiresAt = Date.now() + TOKEN_REFRESH_INTERVAL;
+    return token;
+  })();
+
+  try {
+    return await tokenRequest;
+  } finally {
+    tokenRequest = null;
   }
-  const { token } = await response.json();
-  return token;
 }
 
 export async function fetchGet(path, serviceUrl) {

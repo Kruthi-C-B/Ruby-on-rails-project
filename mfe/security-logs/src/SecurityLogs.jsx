@@ -1,15 +1,39 @@
 import React, { useEffect, useState } from "react";
 
-async function fetchAudits(securityLogsApiUrl) {
-  const tokenResponse = await fetch("/api/v1/auth/token", {
-    headers: { Accept: "application/json" },
-    credentials: "same-origin",
-  });
-  if (!tokenResponse.ok) {
-    const data = await tokenResponse.json().catch(() => null);
-    throw new Error(responseErrorMessage(data, tokenResponse.status, "Token request failed"));
+const TOKEN_REFRESH_INTERVAL = 4 * 60 * 1000;
+let cachedToken;
+let tokenExpiresAt = 0;
+let tokenRequest;
+
+async function getToken() {
+  if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
+  if (tokenRequest) return tokenRequest;
+
+  tokenRequest = (async () => {
+    const tokenResponse = await fetch("/api/v1/auth/token?service=security-logs-api", {
+      headers: { Accept: "application/json" },
+      credentials: "same-origin",
+    });
+    if (!tokenResponse.ok) {
+      const data = await tokenResponse.json().catch(() => null);
+      throw new Error(responseErrorMessage(data, tokenResponse.status, "Token request failed"));
+    }
+
+    const { token } = await tokenResponse.json();
+    cachedToken = token;
+    tokenExpiresAt = Date.now() + TOKEN_REFRESH_INTERVAL;
+    return token;
+  })();
+
+  try {
+    return await tokenRequest;
+  } finally {
+    tokenRequest = null;
   }
-  const { token } = await tokenResponse.json();
+}
+
+async function fetchAudits(securityLogsApiUrl) {
+  const token = await getToken();
 
   const response = await fetch(`${securityLogsApiUrl}/api/v1/security/login_audits`, {
     headers: {

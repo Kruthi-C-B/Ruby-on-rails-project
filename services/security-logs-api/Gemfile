@@ -4,5 +4,6 @@ gem "rails", "~> 8.1.4"
 gem "mysql2", "~> 0.5"
 gem "jwt", "~> 3.3"
 gem "rack-cors", "~> 3.0"
+gem "localfind_shared", path: "../../shared/localfind_shared"
 gem "puma", ">= 5.0"
 gem "bootsnap", require: false

@@ -53,9 +53,9 @@ default: &default
   adapter: mysql2
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: root
-  password: password # This must exactly match MYSQL_ROOT_PASSWORD in docker-compose.yml
-  host: db           # This routes the connection to the 'db' service in docker-compose.yml
+  username: <%= ENV.fetch("LOCALFIND_MAIN_DB_USERNAME", "localfind_main") %>
+  password: <%= ENV.fetch("LOCALFIND_MAIN_DB_PASSWORD") %>
+  host: <%= ENV.fetch("DB_HOST", "db") %>
 
 development:
   <<: *default
@@ -68,5 +68,3 @@ test:
 production:
   <<: *default
   database: local_find_production
-  username: local_find
-  password: <%= ENV["LOCAL_FIND_DATABASE_PASSWORD"] %>

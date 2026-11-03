@@ -1,8 +1,5 @@
 class User < ApplicationRecord
-  has_one :tenant
-  has_many :carts
+  include LocalFindPramata::AdminRole
 
-  def is_admin?
-    is_admin || platform_admin
-  end
+  has_one :tenant
 end

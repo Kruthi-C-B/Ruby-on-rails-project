@@ -1,3 +1,10 @@
+PATH
+  remote: shared/localfind_shared
+  specs:
+    localfind_shared (0.1.0)
+      activesupport (>= 7.0)
+      jwt (~> 3.3)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -419,6 +426,7 @@ DEPENDENCIES
   jbuilder
   jwt (~> 3.3)
   kamal
+  localfind_shared!
   mysql2 (~> 0.5)
   paper_trail
   propshaft

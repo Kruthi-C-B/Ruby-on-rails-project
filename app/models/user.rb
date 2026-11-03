@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  include LocalFindPramata::AdminRole
+
   has_secure_password
   has_one :tenant, dependent: :destroy
   has_many :carts, dependent: :destroy

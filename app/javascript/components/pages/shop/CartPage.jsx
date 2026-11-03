@@ -9,16 +9,14 @@ import {
 
 import {
   Alert,
-  Badge,
   Button,
-  Card,
   EmptyState,
   Input,
   PageContainer,
   PageHeader,
-  Section,
   Spinner,
 } from "../../ui";
+import OrderHistory from "./OrderHistory";
 
 export default function CartPage() {
   const [cart, setCart] = useState(null);
@@ -143,7 +141,7 @@ export default function CartPage() {
     <PageContainer size="narrow">
       <PageHeader title="Your Shopping Cart" />
 
-      <div style={{ marginBottom: "20px" }}>
+      <div className="lf-cart-history-toggle">
         <Button
           variant="outline"
           onClick={() => setShowPastOrders((prev) => !prev)}
@@ -153,195 +151,47 @@ export default function CartPage() {
       </div>
 
       {showPastOrders ? (
-        ordersLoading ? (
-          <Spinner label="Loading past orders…" />
-        ) : ordersError ? (
-          <Alert variant="error">
-            {ordersError}
-          </Alert>
-        ) : orders.length > 0 ? (
-          <Section title="Your Past Orders">
-            {orders.map((order) => (
-              <Card
-                key={order.id}
-                variant="muted"
-                className="lf-order-card"
-                title={
-                  <>
-                    Order #{order.id} <Badge>{order.status}</Badge>
-                  </>
-                }
-              >
-                <table
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    borderCollapse: "collapse",
-                    marginTop: "10px",
-                  }}
-                >
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #ccc" }}>
-                      <th style={{ paddingBottom: "8px" }}>Product</th>
-                      <th style={{ paddingBottom: "8px" }}>Qty</th>
-                      <th style={{ paddingBottom: "8px" }}>Unit Price</th>
-                      <th style={{ paddingBottom: "8px" }}>Discount</th>
-                      <th style={{ paddingBottom: "8px" }}>Line Total</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {(order.cart_items || []).map((item) => (
-                      <tr
-                        key={item.id}
-                        style={{ borderBottom: "1px solid #eee" }}
-                      >
-                        <td style={{ padding: "8px 0" }}>
-                          {item.product_listing?.product?.name ||
-                            "Unknown Product"}
-                        </td>
-
-                        <td>{item.quantity}</td>
-
-                        <td>
-                          $
-                          {parseFloat(item.unit_price).toFixed(2)}
-                        </td>
-
-                        <td>
-                          -$
-                          {parseFloat(
-                            item.discount_amount || 0
-                          ).toFixed(2)}
-                        </td>
-
-                        <td>
-                          $
-                          {parseFloat(
-                            item.total_price || 0
-                          ).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-
-                <div
-                  style={{
-                    textAlign: "right",
-                    marginTop: "15px",
-                    fontSize: "1.1em",
-                  }}
-                >
-                  {Number(order.discount_amount) > 0 && (
-                    <p style={{ color: "green" }}>
-                      Discount: -$
-                      {parseFloat(
-                        order.discount_amount
-                      ).toFixed(2)}
-                    </p>
-                  )}
-
-                  <strong>
-                    Total Paid: $
-                    {parseFloat(
-                      order.total_price || 0
-                    ).toFixed(2)}
-                  </strong>
-                </div>
-              </Card>
-            ))}
-          </Section>
-        ) : (
-          <EmptyState title="You have no past orders yet." />
-        )
+        <OrderHistory orders={orders} loading={ordersLoading} error={ordersError} />
       ) : cartError ? (
         <Alert>{cartError}</Alert>
       ) : !cart || !cart.items || cart.items.length === 0 ? (
         <EmptyState title="Your cart is empty." />
       ) : (
         <>
-          <table
-            style={{
-              width: "100%",
-              textAlign: "left",
-              borderCollapse: "collapse",
-              marginBottom: "30px",
-            }}
-          >
-            <thead>
-              <tr style={{ borderBottom: "2px solid #ccc" }}>
-                <th style={{ paddingBottom: "10px" }}>Product</th>
-                <th style={{ paddingBottom: "10px" }}>Quantity</th>
-                <th style={{ paddingBottom: "10px" }}>Unit Price</th>
-                <th style={{ paddingBottom: "10px" }}>Total</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {cart.items.map((item) => (
-                <tr
-                  key={item.id}
-                  style={{ borderBottom: "1px solid #eee" }}
-                >
-                  <td style={{ padding: "15px 0" }}>
-                    {item.product_listing?.product?.name ||
-                      "Unknown Product"}
-                  </td>
-
-                  <td>{item.quantity}</td>
-
-                  <td>
-                    $
-                    {parseFloat(item.unit_price).toFixed(2)}
-                  </td>
-
-                  <td>
-                    $
-                    {(
-                      item.unit_price * item.quantity
-                    ).toFixed(2)}
-                  </td>
+          <div className="lf-table-scroll">
+            <table className="lf-cart-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
 
-          <div
-            style={{
-              borderTop: "2px solid #ccc",
-              paddingTop: "20px",
-              maxWidth: "350px",
-              marginLeft: "auto",
-            }}
-          >
+              <tbody>
+                {cart.items.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.product_listing?.product?.name || "Unknown Product"}</td>
+                    <td>{item.quantity}</td>
+                    <td>${parseFloat(item.unit_price).toFixed(2)}</td>
+                    <td>${(item.unit_price * item.quantity).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="lf-cart-total">
             {availableDiscounts.length > 0 && (
-              <div
-                style={{
-                  padding: "15px",
-                  backgroundColor: "#e8f4f8",
-                  border: "1px solid #b6d4fe",
-                  borderRadius: "5px",
-                  marginBottom: "20px",
-                }}
-              >
-                <strong style={{ color: "#004085" }}>
+              <div className="lf-cart-promos">
+                <strong className="lf-cart-promos__title">
                   🔥 Available Promo Codes:
                 </strong>
 
-                <ul
-                  style={{
-                    margin: "10px 0 0 0",
-                    paddingLeft: "20px",
-                    color: "#004085",
-                    fontSize: "0.9em",
-                  }}
-                >
+                <ul className="lf-cart-promos__list">
                   {availableDiscounts.map((discount) => (
-                    <li
-                      key={discount.id}
-                      style={{ marginBottom: "5px" }}
-                    >
+                    <li key={discount.id}>
                       Use code{" "}
                       <strong>{discount.code}</strong> for{" "}
                       {parseFloat(discount.percentage)}% off!
@@ -351,13 +201,7 @@ export default function CartPage() {
               </div>
             )}
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginBottom: "10px",
-              }}
-            >
+            <div className="lf-cart-total__row">
               <span>Subtotal:</span>
 
               <span>
@@ -366,14 +210,7 @@ export default function CartPage() {
             </div>
 
             {cart.discount_percentage && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  marginBottom: "10px",
-                  color: "green",
-                }}
-              >
+              <div className="lf-cart-total__row lf-cart-total__row--discount">
                 <span>
                   Discount Applied (
                   {parseFloat(cart.discount_percentage)}%):
@@ -388,15 +225,7 @@ export default function CartPage() {
               </div>
             )}
 
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "1.2em",
-                fontWeight: "bold",
-                marginTop: "10px",
-              }}
-            >
+            <div className="lf-cart-total__row lf-cart-total__row--grand">
               <span>Total:</span>
 
               <span>
@@ -404,10 +233,7 @@ export default function CartPage() {
               </span>
             </div>
 
-            <div
-              className="lf-inline-form"
-              style={{ marginTop: "20px" }}
-            >
+            <div className="lf-inline-form lf-cart-promo-form">
               <Input
                 type="text"
                 aria-label="Promo code"
@@ -440,8 +266,7 @@ export default function CartPage() {
 
             <Button
               onClick={handleCheckout}
-              className="lf-button--full"
-              style={{ marginTop: "20px" }}
+              className="lf-button--full lf-cart-checkout"
             >
               Proceed to Checkout
             </Button>

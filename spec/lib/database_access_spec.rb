@@ -1,0 +1,65 @@
+require "rails_helper"
+
+RSpec.describe LocalFindPramata::DatabaseAccess do
+  it "limits admin-dashboard to shared data it reads or owns and no tenant databases" do
+    grants = described_class.statements(
+      service: :admin_dashboard,
+      database: "local_find_development",
+      account: "localfind_admin_dashboard"
+    )
+
+    expect(grants).to include(
+      "GRANT SELECT (`id`, `email`, `is_admin`, `platform_admin`, `created_at`) ON `local_find_development`.`users` TO 'localfind_admin_dashboard'@'%'"
+    )
+    expect(grants.none? { |grant| grant.include?("_tenant_") }).to be(true)
+    expect(grants).not_to include(a_string_matching(/password_digest/))
+    expect(grants.none? { |grant| grant.include?("ON *.*") }).to be(true)
+  end
+
+  it "limits security-logs to reading the login audit fields" do
+    grants = described_class.statements(
+      service: :security_logs,
+      database: "local_find_development",
+      account: "localfind_security_logs"
+    )
+
+    expect(grants).to include(
+      "GRANT SELECT (`id`, `email`, `ip_address`, `status`, `failure_reason`, `created_at`, `user_id`) ON `local_find_development`.`login_audits` TO 'localfind_security_logs'@'%'"
+    )
+    expect(grants).not_to include(a_string_matching(/users|tenants|categories/))
+    expect(grants).not_to include(a_string_matching(/INSERT|UPDATE|DELETE/))
+  end
+
+  it "gives the main app catalog reads and its tenant-database provisioning privileges" do
+    grants = described_class.statements(
+      service: :main,
+      database: "local_find_development",
+      account: "localfind_main",
+      tenant_database_pattern: "development\\_localfind\\_tenant\\_%"
+    )
+
+    expect(grants).to include("GRANT SELECT ON `local_find_development`.`products` TO 'localfind_main'@'%'")
+    expect(grants).to include("GRANT CREATE ON *.* TO 'localfind_main'@'%'")
+    expect(grants).to include(
+      "GRANT ALL PRIVILEGES ON `development\\_localfind\\_tenant\\_%`.* TO 'localfind_main'@'%'"
+    )
+    expect(grants).not_to include(a_string_matching(/categories` TO 'localfind_main'@'%'.*(INSERT|UPDATE|DELETE)/))
+  end
+
+  it "adds catalog and legacy listing writes only in the isolated test database" do
+    grants = described_class.statements(
+      service: :main,
+      database: "local_find_test",
+      account: "localfind_main",
+      tenant_database_pattern: "test\\_localfind\\_tenant\\_%",
+      allow_test_catalog_writes: true
+    )
+
+    expect(grants).to include(
+      "GRANT SELECT, INSERT, UPDATE, DELETE ON `local_find_test`.`categories` TO 'localfind_main'@'%'"
+    )
+    expect(grants).to include(
+      "GRANT SELECT, INSERT, UPDATE, DELETE ON `local_find_test`.`product_listings` TO 'localfind_main'@'%'"
+    )
+  end
+end
