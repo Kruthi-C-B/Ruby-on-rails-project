@@ -1,0 +1,57 @@
+  [1m[36mActiveRecord::SchemaMigration Load (0.9ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC[0m
+  [1m[36mTRANSACTION (1.6ms)[0m  [1m[35mBEGIN[0m
+-------------------------------------------------------------------
+LoginAuditsAuthorizationTest: test_rejects_requests_without_a_token
+-------------------------------------------------------------------
+Started GET "/api/v1/security/login_audits" for 127.0.0.1 at 2026-11-02 12:01:03 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+Filter chain halted as :authenticate! rendered or redirected
+Completed 401 Unauthorized in 16ms (Views: 0.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[31mROLLBACK[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+-------------------------------------------------------------------------------
+LoginAuditsAuthorizationTest: test_rejects_a_valid_token_without_the_admin_role
+-------------------------------------------------------------------------------
+Started GET "/api/v1/security/login_audits" for 127.0.0.1 at 2026-11-02 12:01:03 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+Filter chain halted as :require_admin! rendered or redirected
+Completed 403 Forbidden in 3ms (Views: 0.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[31mROLLBACK[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.5ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC[0m
+  [1m[36mTRANSACTION (0.3ms)[0m  [1m[35mBEGIN[0m
+-------------------------------------------------------------------------------
+LoginAuditsAuthorizationTest: test_rejects_a_valid_token_without_the_admin_role
+-------------------------------------------------------------------------------
+Started GET "/api/v1/security/login_audits" for 127.0.0.1 at 2026-11-02 12:02:45 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+Filter chain halted as :require_admin! rendered or redirected
+Completed 403 Forbidden in 17ms (Views: 0.6ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 1.8ms)
+  [1m[36mTRANSACTION (0.8ms)[0m  [1m[31mROLLBACK[0m
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[35mBEGIN[0m
+-------------------------------------------------------------------
+LoginAuditsAuthorizationTest: test_rejects_requests_without_a_token
+-------------------------------------------------------------------
+Started GET "/api/v1/security/login_audits" for 127.0.0.1 at 2026-11-02 12:02:45 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+Filter chain halted as :authenticate! rendered or redirected
+Completed 401 Unauthorized in 4ms (Views: 0.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+  [1m[36mTRANSACTION (0.6ms)[0m  [1m[31mROLLBACK[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.2ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC[0m
+  [1m[36mTRANSACTION (1.8ms)[0m  [1m[35mBEGIN[0m
+-------------------------------------------------------------------------------
+LoginAuditsAuthorizationTest: test_rejects_a_valid_token_without_the_admin_role
+-------------------------------------------------------------------------------
+Started GET "/api/v1/security/login_audits" for 127.0.0.1 at 2026-11-02 12:13:04 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+Filter chain halted as :require_admin! rendered or redirected
+Completed 403 Forbidden in 12ms (Views: 0.2ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+  [1m[36mTRANSACTION (0.9ms)[0m  [1m[31mROLLBACK[0m
+  [1m[36mTRANSACTION (0.4ms)[0m  [1m[35mBEGIN[0m
+-------------------------------------------------------------------
+LoginAuditsAuthorizationTest: test_rejects_requests_without_a_token
+-------------------------------------------------------------------
+Started GET "/api/v1/security/login_audits" for 127.0.0.1 at 2026-11-02 12:13:05 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+Filter chain halted as :authenticate! rendered or redirected
+Completed 401 Unauthorized in 2ms (Views: 0.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+  [1m[36mTRANSACTION (1.2ms)[0m  [1m[31mROLLBACK[0m

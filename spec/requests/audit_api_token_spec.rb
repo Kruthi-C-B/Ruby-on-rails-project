@@ -44,12 +44,14 @@ RSpec.describe "Audit API token endpoint", type: :request do
     expect(claims.fetch("exp")).to be_between(Time.current.to_i, 5.minutes.from_now.to_i)
   end
 
-  it "renders the security page with the audit service URL" do
+  it "renders the admin dashboard mount with the micro-backend URL" do
     post "/localFind/login", params: { email: email, password: "password123" }
 
-    get "/localFind/admin/security"
+    get "/localFind/admin/dashboard"
 
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include('auditApiUrl: "http://127.0.0.1:3100"')
+    expect(response.body).to include('adminApiUrl: "http://127.0.0.1:3100"')
+    expect(response.body).to include('securityLogsMfeUrl: "/mfe/localfind-security-logs.js"')
+    expect(response.body).to include('securityLogsApiUrl: "http://127.0.0.1:3101"')
   end
 end

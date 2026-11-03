@@ -8,9 +8,9 @@
       "RSpec"
     ],
     "project_name": "App",
-    "timestamp": "2026-10-28T06:37:53.448+00:00",
+    "timestamp": "2026-11-02T12:35:26.031+00:00",
     "root": "/app",
-    "commit": "627156efb73f23d632aee990d960e1c8f2bc3782",
+    "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
     "primary_coverage": "line",
     "line_coverage": true,
     "branch_coverage": false,
@@ -18,29 +18,30 @@
   },
   "total": {
     "lines": {
-      "covered": 458,
-      "missed": 54,
-      "omitted": 540,
-      "total": 512,
-      "percent": 89.453125,
-      "strength": 1.9921875
+      "covered": 159,
+      "missed": 31,
+      "omitted": 323,
+      "total": 190,
+      "percent": 83.6842105263158,
+      "strength": 0.9842105263157894
     }
   },
   "coverage": {
-    "app/controllers/api/v1/admin/base_controller.rb": {
+    "app/controllers/admin_dashboard_controller.rb": {
       "source": [
-        "class Api::V1::Admin::BaseController < ApplicationController",
-        "  skip_before_action :verify_authenticity_token",
-        "  before_action :require_admin!",
+        "class AdminDashboardController < ApplicationController",
+        "  before_action :require_login",
+        "  before_action :require_admin",
+        "",
+        "  def show",
+        "  end",
         "",
         "  private",
         "",
-        "  def require_admin!",
-        "    # Because you are using Rails sessions, we can check current_user directly",
-        "    user = User.find_by(id: session[:user_id])",
-        "    unless user&.is_admin?",
-        "      render json: { error: \"Unauthorized. Admin access only.\" }, status: :unauthorized",
-        "    end",
+        "  def require_admin",
+        "    return if current_user&.is_admin?",
+        "",
+        "    render \"errors/restricted\", status: :forbidden",
         "  end",
         "end"
       ],
@@ -51,369 +52,70 @@
         null,
         1,
         null,
+        null,
         1,
         null,
-        11,
-        11,
-        0,
+        1,
+        1,
         null,
+        0,
         null,
         null
       ],
       "lines_covered_percent": 87.5,
       "covered_lines": 7,
       "missed_lines": 1,
-      "omitted_lines": 6,
+      "omitted_lines": 7,
       "total_lines": 8
     },
-    "app/controllers/api/v1/admin/categories_controller.rb": {
+    "app/controllers/api/v1/auth_tokens_controller.rb": {
       "source": [
-        "class Api::V1::Admin::CategoriesController < Api::V1::Admin::BaseController",
-        "  def create",
-        "    category = Category.new(category_params)",
-        "    if category.save",
-        "      render json: category, status: :created",
-        "    else",
-        "      render json: { errors: category.errors.full_messages }, status: :unprocessable_entity",
-        "    end",
-        "  end",
+        "module Api",
+        "  module V1",
+        "    class AuthTokensController < ApplicationController",
+        "      def show",
+        "        return render json: { errors: [ \"Not logged in\" ] }, status: :unauthorized unless logged_in?",
         "",
-        "  def update",
-        "    category = Category.find(params[:id])",
-        "    if category.update(category_params)",
-        "      render json: category, status: :ok",
-        "    else",
-        "      render json: { errors: category.errors.full_messages }, status: :unprocessable_entity",
-        "    end",
-        "  end",
+        "        payload = {",
+        "          user_id: current_user.id,",
+        "          email: current_user.email,",
+        "          is_admin: current_user.is_admin?,",
+        "          exp: 5.minutes.from_now.to_i",
+        "        }",
         "",
-        "  def destroy",
-        "    category = Category.find(params[:id])",
-        "    if category.products.exists?",
-        "      return render json: { errors: [ \"Cannot delete a category that still has products. Move or delete its products first.\" ] },",
-        "                    status: :unprocessable_entity",
-        "    end",
-        "",
-        "    category.destroy!",
-        "    render json: { message: \"Category deleted.\" }, status: :ok",
-        "  rescue ActiveRecord::RecordNotFound",
-        "    render json: { errors: [ \"Category not found.\" ] }, status: :not_found",
-        "  rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::InvalidForeignKey => error",
-        "    render json: { errors: [ error.message ] }, status: :unprocessable_entity",
-        "  end",
-        "",
-        "  private",
-        "",
-        "  def category_params",
-        "    params.require(:category).permit(:name)",
-        "  end",
-        "end"
-      ],
-      "lines": [
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        0,
-        null,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        null,
-        0,
-        null,
-        null,
-        null,
-        1,
-        2,
-        2,
-        1,
-        null,
-        null,
-        null,
-        1,
-        1,
-        null,
-        0,
-        null,
-        0,
-        null,
-        null,
-        1,
-        null,
-        1,
-        2,
-        null,
-        null
-      ],
-      "lines_covered_percent": 81.81818181818181,
-      "covered_lines": 18,
-      "missed_lines": 4,
-      "omitted_lines": 18,
-      "total_lines": 22
-    },
-    "app/controllers/api/v1/admin/discounts_controller.rb": {
-      "source": [
-        "class Api::V1::Admin::DiscountsController < Api::V1::Admin::BaseController",
-        "  def index",
-        "    discounts = Discount.order(:id)",
-        "    render json: discounts",
-        "  end",
-        "",
-        "  def create",
-        "    discount = Discount.new(discount_params)",
-        "    if discount.save",
-        "      render json: discount,",
-        "      status: :created",
-        "    else",
-        "      render json: { errors: discount.errors.full_messages },",
-        "                    status: :unprocessable_entity",
-        "    end",
-        "  end",
-        "",
-        "  def update",
-        "    discount = Discount.find(params[:id])",
-        "    if discount.update(discount_params)",
-        "      render json: discount, status: :ok",
-        "    else",
-        "      render json: { errors: discount.errors.full_messages },",
-        "             status: :unprocessable_entity",
-        "    end",
-        "  end",
-        "",
-        "  def destroy",
-        "    discount = Discount.find(params[:id])",
-        "    if discount.carts.exists?",
-        "      return render json: {",
-        "        errors: [ \"Cannot delete a discount that is applied to carts.\" ]",
-        "      }, status: :unprocessable_entity",
-        "    end",
-        "",
-        "    discount.destroy!",
-        "    render json: { message: \"Discount deleted.\" }, status: :ok",
-        "  rescue ActiveRecord::RecordNotFound",
-        "    render json: { errors: [ \"Discount not found.\" ] }, status: :not_found",
-        "  rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::InvalidForeignKey => error",
-        "    render json: { errors: [ error.message ] }, status: :unprocessable_entity",
-        "  end",
-        "",
-        "  private",
-        "",
-        "  def discount_params",
-        "    params.require(:discount).permit(:code, :percentage)",
-        "  end",
-        "end"
-      ],
-      "lines": [
-        1,
-        1,
-        0,
-        0,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        0,
-        null,
-        null,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        null,
-        0,
-        null,
-        null,
-        null,
-        null,
-        1,
-        2,
-        2,
-        1,
-        null,
-        null,
-        null,
-        null,
-        1,
-        1,
-        null,
-        0,
-        null,
-        0,
-        null,
-        null,
-        1,
-        null,
-        1,
-        2,
-        null,
-        null
-      ],
-      "lines_covered_percent": 76.0,
-      "covered_lines": 19,
-      "missed_lines": 6,
-      "omitted_lines": 24,
-      "total_lines": 25
-    },
-    "app/controllers/api/v1/admin/products_controller.rb": {
-      "source": [
-        "class Api::V1::Admin::ProductsController < Api::V1::Admin::BaseController",
-        "  def index",
-        "    products = Product.eager_load(:category).order(\"categories.name ASC, products.name ASC\")",
-        "    grouped_products = products.group_by(&:category).map do |category, category_products|",
-        "      {",
-        "        category_id: category.id,",
-        "        category_name: category.name,",
-        "        products: category_products.map do |product|",
-        "          {",
-        "            id: product.id,",
-        "            name: product.name,",
-        "            description: product.description",
-        "          }",
-        "        end",
-        "      }",
-        "    end",
-        "",
-        "    render json: grouped_products",
-        "  end",
-        "",
-        "  def create",
-        "    product = Product.new(product_params)",
-        "    if product.save",
-        "      render json: product, status: :created",
-        "    else",
-        "      render json: { errors: product.errors.full_messages }, status: :unprocessable_entity",
-        "    end",
-        "  end",
-        "",
-        "  def update",
-        "    product = Product.find(params[:id])",
-        "    if product.update(product_params)",
-        "      render json: product, status: :ok",
-        "    else",
-        "      render json: { errors: product.errors.full_messages }, status: :unprocessable_entity",
-        "    end",
-        "  end",
-        "",
-        "  def destroy",
-        "    product = Product.find(params[:id])",
-        "    if ListingReference.exists?(product_id: product.id) || tenant_product_records_exist?(product.id)",
-        "      return render json: {",
-        "        errors: [ \"Cannot delete a product that is listed by a store or appears in purchase history.\" ]",
-        "      }, status: :unprocessable_entity",
-        "    end",
-        "",
-        "    product.destroy!",
-        "    render json: { message: \"Product deleted.\" }, status: :ok",
-        "  rescue ActiveRecord::RecordNotFound",
-        "    render json: { errors: [ \"Product not found.\" ] }, status: :not_found",
-        "  rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::InvalidForeignKey => error",
-        "    render json: { errors: [ error.message ] }, status: :unprocessable_entity",
-        "  end",
-        "",
-        "  private",
-        "",
-        "  def tenant_product_records_exist?(product_id)",
-        "    Tenant.all.any? do |tenant|",
-        "      TenantDatabase.switch(tenant) do",
-        "        ProductListing.exists?(product_id: product_id) ||",
-        "          PurchaseHistory.exists?(product_id: product_id)",
+        "        token = JWT.encode(payload, ENV.fetch(\"AUDIT_API_KEY\"), \"HS256\")",
+        "        render json: { token: token }",
         "      end",
         "    end",
         "  end",
-        "",
-        "  def product_params",
-        "    params.require(:product).permit(:name, :description, :category_id)",
-        "  end",
         "end"
       ],
       "lines": [
         1,
         1,
-        0,
-        0,
-        null,
-        0,
-        null,
-        null,
-        null,
-        0,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        0,
-        null,
-        null,
         1,
-        1,
-        1,
-        1,
-        null,
-        0,
-        null,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        null,
-        0,
-        null,
-        null,
-        null,
-        1,
-        1,
-        1,
-        0,
-        null,
-        null,
-        null,
-        null,
-        1,
-        1,
-        null,
-        0,
-        null,
-        0,
-        null,
-        null,
-        1,
-        null,
-        1,
-        1,
-        0,
-        0,
-        null,
-        null,
-        null,
-        null,
-        null,
         1,
         2,
         null,
+        null,
+        1,
+        null,
+        null,
+        null,
+        null,
+        null,
+        1,
+        1,
+        null,
+        null,
+        null,
         null
       ],
-      "lines_covered_percent": 62.5,
-      "covered_lines": 20,
-      "missed_lines": 12,
-      "omitted_lines": 37,
-      "total_lines": 32
+      "lines_covered_percent": 100.0,
+      "covered_lines": 8,
+      "missed_lines": 0,
+      "omitted_lines": 11,
+      "total_lines": 8
     },
     "app/controllers/application_controller.rb": {
       "source": [
@@ -450,7 +152,7 @@
         "",
         "    if logged_in? && current_tenant.nil?",
         "      flash[:alert] = \"Please create a store profile first.\"",
-        "      redirect_to new_tenant_path",
+        "      redirect_to \"/localFind/tenant\"",
         "    end",
         "  end",
         "end"
@@ -462,22 +164,22 @@
         1,
         null,
         1,
-        12,
+        5,
         null,
         1,
-        12,
-        null,
-        null,
-        1,
-        0,
+        15,
         null,
         null,
         1,
-        0,
+        4,
         null,
         null,
         1,
         0,
+        null,
+        null,
+        1,
+        1,
         null,
         0,
         null,
@@ -494,9 +196,9 @@
         null,
         null
       ],
-      "lines_covered_percent": 57.142857142857146,
-      "covered_lines": 12,
-      "missed_lines": 9,
+      "lines_covered_percent": 66.66666666666667,
+      "covered_lines": 14,
+      "missed_lines": 7,
       "omitted_lines": 16,
       "total_lines": 21
     },
@@ -521,19 +223,19 @@
         "",
         "      # 1. Platform Owner (Super Admin) Logic",
         "      if user.is_admin?",
-        "        redirect_to \"/admin/dashboard\", notice: \"Welcome to the Platform Admin Dashboard!\"",
+        "        redirect_to \"/localFind/admin/dashboard\", notice: \"Welcome to the Platform Admin Dashboard!\"",
         "",
         "      # 2. Existing Store Owner (Tenant) Logic",
         "      elsif params[:admin_login] == \"true\" || user.tenant.present?",
         "        if user.tenant.present?",
-        "          redirect_to root_path, notice: \"Welcome back to your store dashboard!\"",
+        "          redirect_to local_find_path, notice: \"Welcome back to your store dashboard!\"",
         "        else",
-        "          redirect_to new_tenant_path, notice: \"Please set up your store profile.\"",
+        "          redirect_to \"/localFind/tenant\", notice: \"Please set up your store profile.\"",
         "        end",
         "",
         "      # 3. Regular Shopper Logic",
         "      else",
-        "        redirect_to root_path, notice: \"Logged in successfully!\"",
+        "        redirect_to local_find_path, notice: \"Logged in successfully!\"",
         "      end",
         "",
         "    elsif user",
@@ -567,7 +269,7 @@
         "",
         "  def destroy",
         "    session[:user_id] = nil",
-        "    redirect_to root_path, notice: \"Logged out successfully!\"",
+        "    redirect_to local_find_path, notice: \"Logged out successfully!\"",
         "  end",
         "end"
       ],
@@ -576,22 +278,22 @@
         1,
         null,
         1,
-        1,
+        2,
         null,
-        1,
+        2,
         null,
-        1,
-        null,
-        null,
+        2,
         null,
         null,
         null,
         null,
-        1,
         null,
         null,
-        1,
-        1,
+        2,
+        null,
+        null,
+        2,
+        2,
         null,
         null,
         0,
@@ -726,25 +428,25 @@
         1,
         null,
         1,
-        5,
-        4,
+        0,
+        0,
         null,
         null,
         null,
         1,
-        5,
+        0,
         null,
-        3,
+        0,
         null,
         null,
         1,
-        3,
+        0,
         null,
         null
       ],
-      "lines_covered_percent": 100.0,
-      "covered_lines": 14,
-      "missed_lines": 0,
+      "lines_covered_percent": 64.28571428571429,
+      "covered_lines": 9,
+      "missed_lines": 5,
       "omitted_lines": 15,
       "total_lines": 14
     },
@@ -871,7 +573,7 @@
         1,
         null,
         1,
-        1,
+        0,
         null,
         null,
         null,
@@ -880,15 +582,15 @@
         null,
         null,
         1,
-        1,
-        1,
+        0,
+        0,
         null,
         null,
         null
       ],
-      "lines_covered_percent": 100.0,
-      "covered_lines": 13,
-      "missed_lines": 0,
+      "lines_covered_percent": 76.92307692307692,
+      "covered_lines": 10,
+      "missed_lines": 3,
       "omitted_lines": 12,
       "total_lines": 13
     },
@@ -949,72 +651,6 @@
       "omitted_lines": 1,
       "total_lines": 4
     },
-    "app/models/product_listing.rb": {
-      "source": [
-        "class ProductListing < ApplicationRecord",
-        "  has_paper_trail",
-        "  belongs_to :product",
-        "",
-        "  validates :price, presence: true, numericality: { greater_than_or_equal_to: 0 }",
-        "  validates :stock_quantity, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }",
-        "",
-        "  validates :product_id, uniqueness: {",
-        "    message: \"is already listed in your store. Please edit the existing listing instead.\"",
-        "  }",
-        "end"
-      ],
-      "lines": [
-        1,
-        1,
-        1,
-        null,
-        1,
-        1,
-        null,
-        1,
-        null,
-        null,
-        null
-      ],
-      "lines_covered_percent": 100.0,
-      "covered_lines": 6,
-      "missed_lines": 0,
-      "omitted_lines": 5,
-      "total_lines": 6
-    },
-    "app/models/purchase_history.rb": {
-      "source": [
-        "class PurchaseHistory < ApplicationRecord",
-        "  has_paper_trail",
-        "",
-        "  belongs_to :product_listing",
-        "  belongs_to :product",
-        "",
-        "  validates :quantity, numericality: { only_integer: true, greater_than: 0 }",
-        "  validates :unit_price, :total_price, numericality: { greater_than_or_equal_to: 0 }",
-        "  validates :purchase_reference, presence: true",
-        "  validates :status, presence: true",
-        "end"
-      ],
-      "lines": [
-        1,
-        1,
-        null,
-        1,
-        1,
-        null,
-        1,
-        1,
-        1,
-        1,
-        null
-      ],
-      "lines_covered_percent": 100.0,
-      "covered_lines": 8,
-      "missed_lines": 0,
-      "omitted_lines": 3,
-      "total_lines": 8
-    },
     "app/models/tenant.rb": {
       "source": [
         "class Tenant < ApplicationRecord",
@@ -1062,453 +698,6 @@
       "missed_lines": 0,
       "omitted_lines": 2,
       "total_lines": 5
-    },
-    "app/services/checkout_service.rb": {
-      "source": [
-        "class CheckoutService",
-        "  class CheckoutError < StandardError; end",
-        "",
-        "  def initialize(cart)",
-        "    @cart = cart",
-        "  end",
-        "",
-        "  def call",
-        "    @cart.with_lock do",
-        "      items = @cart.cart_items.includes(listing_reference: :tenant).to_a",
-        "      raise CheckoutError, \"Cart is empty.\" if items.empty?",
-        "      raise CheckoutError, \"This cart has already been checked out.\" unless @cart.status == \"pending\"",
-        "",
-        "      @cart.update!(purchase_reference: SecureRandom.uuid) if @cart.purchase_reference.blank?",
-        "      purchase_reference = @cart.purchase_reference",
-        "      items_by_tenant = items.group_by { |item| item.listing_reference.tenant_id }",
-        "      amounts_by_item = DiscountAllocator.call(items, @cart.discount&.percentage || 0)",
-        "",
-        "      validate_stock!(items_by_tenant, purchase_reference, amounts_by_item)",
-        "      create_pending_purchases!(items_by_tenant, purchase_reference, amounts_by_item)",
-        "      complete_purchases!(items_by_tenant, purchase_reference)",
-        "      @cart.update!(status: \"ordered\")",
-        "",
-        "      purchase_reference",
-        "    end",
-        "  end",
-        "",
-        "  private",
-        "",
-        "  def validate_stock!(items_by_tenant, purchase_reference, amounts_by_item)",
-        "    items_by_tenant.each_value do |items|",
-        "      tenant = items.first.listing_reference.tenant",
-        "      TenantDatabase.switch(tenant) do",
-        "        items.each do |item|",
-        "          listing_id = item.listing_reference.tenant_listing_id",
-        "          existing = PurchaseHistory.find_by(",
-        "            purchase_reference: purchase_reference,",
-        "            product_listing_id: listing_id",
-        "          )",
-        "          if existing",
-        "            amounts = amounts_by_item.fetch(item.id)",
-        "            unless existing.quantity == item.quantity &&",
-        "                   existing.discount_amount == amounts[:discount_amount] &&",
-        "                   existing.total_price == amounts[:total_price]",
-        "              raise CheckoutError, \"The cart changed while checkout was being retried.\"",
-        "            end",
-        "            next",
-        "          end",
-        "",
-        "          listing = ProductListing.find_by(id: listing_id)",
-        "          raise CheckoutError, \"A product is no longer available.\" unless listing",
-        "          if listing.stock_quantity < item.quantity",
-        "            raise CheckoutError, \"A product does not have enough stock.\"",
-        "          end",
-        "        end",
-        "      end",
-        "    end",
-        "  end",
-        "",
-        "  def create_pending_purchases!(items_by_tenant, purchase_reference, amounts_by_item)",
-        "    items_by_tenant.each_value do |items|",
-        "      tenant = items.first.listing_reference.tenant",
-        "      TenantDatabase.switch(tenant) do",
-        "        ActiveRecord::Base.transaction do",
-        "          items.each do |item|",
-        "            listing_id = item.listing_reference.tenant_listing_id",
-        "            next if PurchaseHistory.exists?(",
-        "              purchase_reference: purchase_reference,",
-        "              product_listing_id: listing_id",
-        "            )",
-        "",
-        "            listing = ProductListing.lock.find(listing_id)",
-        "            if listing.stock_quantity < item.quantity",
-        "              raise CheckoutError, \"A product does not have enough stock.\"",
-        "            end",
-        "",
-        "            amounts = amounts_by_item.fetch(item.id)",
-        "            listing.update!(stock_quantity: listing.stock_quantity - item.quantity)",
-        "            PurchaseHistory.create!(",
-        "              user_id: @cart.user_id,",
-        "              product_listing_id: listing.id,",
-        "              product_id: listing.product_id,",
-        "              quantity: item.quantity,",
-        "              unit_price: item.unit_price,",
-        "              discount_amount: amounts[:discount_amount],",
-        "              total_price: amounts[:total_price],",
-        "              purchase_reference: purchase_reference,",
-        "              status: \"pending\"",
-        "            )",
-        "          end",
-        "        end",
-        "",
-        "        items.each do |item|",
-        "          listing = ProductListing.find(item.listing_reference.tenant_listing_id)",
-        "          item.listing_reference.update!(stock_quantity: listing.stock_quantity)",
-        "        end",
-        "      end",
-        "    end",
-        "  end",
-        "",
-        "  def complete_purchases!(items_by_tenant, purchase_reference)",
-        "    items_by_tenant.each_value do |items|",
-        "      tenant = items.first.listing_reference.tenant",
-        "      TenantDatabase.switch(tenant) do",
-        "        PurchaseHistory.where(",
-        "          purchase_reference: purchase_reference,",
-        "          status: \"pending\"",
-        "        ).find_each do |purchase|",
-        "          purchase.update!(status: \"successful\", purchased_at: Time.current)",
-        "        end",
-        "      end",
-        "    end",
-        "  end",
-        "end"
-      ],
-      "lines": [
-        1,
-        1,
-        null,
-        1,
-        4,
-        null,
-        null,
-        1,
-        4,
-        4,
-        4,
-        3,
-        null,
-        2,
-        2,
-        5,
-        2,
-        null,
-        2,
-        2,
-        2,
-        2,
-        null,
-        2,
-        null,
-        null,
-        null,
-        1,
-        null,
-        1,
-        2,
-        3,
-        3,
-        3,
-        3,
-        3,
-        null,
-        null,
-        null,
-        3,
-        0,
-        0,
-        null,
-        null,
-        0,
-        null,
-        0,
-        null,
-        null,
-        3,
-        3,
-        3,
-        0,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        1,
-        2,
-        3,
-        3,
-        3,
-        3,
-        3,
-        3,
-        null,
-        null,
-        null,
-        null,
-        3,
-        3,
-        0,
-        null,
-        null,
-        3,
-        3,
-        3,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        3,
-        3,
-        3,
-        null,
-        null,
-        null,
-        null,
-        null,
-        1,
-        2,
-        3,
-        3,
-        3,
-        null,
-        null,
-        null,
-        3,
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
-      "lines_covered_percent": 89.65517241379311,
-      "covered_lines": 52,
-      "missed_lines": 6,
-      "omitted_lines": 56,
-      "total_lines": 58
-    },
-    "app/services/discount_allocator.rb": {
-      "source": [
-        "class DiscountAllocator",
-        "  def self.call(items, percentage)",
-        "    line_subtotals = items.to_h do |item|",
-        "      line_total = (BigDecimal(item.unit_price.to_s) * item.quantity * 100).round.to_i",
-        "      [ item.id, line_total ]",
-        "    end",
-        "    subtotal_cents = line_subtotals.values.sum",
-        "    return line_subtotals.transform_values { |cents| amount_from_cents(cents, 0) } if subtotal_cents.zero?",
-        "",
-        "    discount_cents = (BigDecimal(subtotal_cents.to_s) * BigDecimal(percentage.to_s) / 100).round.to_i",
-        "    allocations = line_subtotals.map do |item_id, line_cents|",
-        "      numerator = discount_cents * line_cents",
-        "      [ item_id, numerator / subtotal_cents, numerator % subtotal_cents ]",
-        "    end",
-        "    remaining_cents = discount_cents - allocations.sum { |_id, base, _remainder| base }",
-        "    allocations.sort_by { |item_id, _base, remainder| [ -remainder, item_id ] }",
-        "      .first(remaining_cents)",
-        "      .each { |allocation| allocation[1] += 1 }",
-        "    discounts_by_item = allocations.to_h { |item_id, discount, _remainder| [ item_id, discount ] }",
-        "",
-        "    line_subtotals.to_h do |item_id, line_cents|",
-        "      discount = discounts_by_item.fetch(item_id)",
-        "      [ item_id, amount_from_cents(line_cents, discount) ]",
-        "    end",
-        "  end",
-        "",
-        "  def self.amount_from_cents(subtotal_cents, discount_cents)",
-        "    {",
-        "      discount_amount: BigDecimal(discount_cents.to_s) / 100,",
-        "      total_price: BigDecimal((subtotal_cents - discount_cents).to_s) / 100",
-        "    }",
-        "  end",
-        "  private_class_method :amount_from_cents",
-        "end"
-      ],
-      "lines": [
-        1,
-        1,
-        7,
-        12,
-        12,
-        null,
-        7,
-        8,
-        null,
-        5,
-        5,
-        11,
-        11,
-        null,
-        16,
-        16,
-        null,
-        0,
-        16,
-        null,
-        5,
-        11,
-        11,
-        null,
-        null,
-        null,
-        1,
-        null,
-        12,
-        12,
-        null,
-        null,
-        1,
-        null
-      ],
-      "lines_covered_percent": 95.45454545454545,
-      "covered_lines": 21,
-      "missed_lines": 1,
-      "omitted_lines": 12,
-      "total_lines": 22
-    },
-    "app/services/tenant_database.rb": {
-      "source": [
-        "class TenantDatabase",
-        "  SHARED_TABLES_IN_TENANTS = %w[",
-        "    cart_items",
-        "    listing_references",
-        "    carts",
-        "    login_audits",
-        "    tenants",
-        "    products",
-        "    categories",
-        "    discounts",
-        "    login_attempts",
-        "    users",
-        "  ].freeze",
-        "",
-        "  class SharedTableDataError < StandardError; end",
-        "",
-        "  def self.switch(tenant, &block)",
-        "    Apartment::Tenant.switch(tenant.slug, &block)",
-        "  end",
-        "",
-        "  def self.provision!(tenant)",
-        "    database_name = Apartment::Tenant.environmentify(tenant.slug)",
-        "    if Apartment.connection.select_values(\"SHOW DATABASES\").include?(database_name)",
-        "      raise Apartment::TenantExists, \"Tenant database #{database_name} already exists\"",
-        "    end",
-        "",
-        "    begin",
-        "      Apartment::Tenant.create(tenant.slug) do",
-        "        remove_shared_tables!",
-        "      end",
-        "    rescue StandardError",
-        "      databases = Apartment.connection.select_values(\"SHOW DATABASES\")",
-        "      Apartment::Tenant.drop(tenant.slug) if databases.include?(database_name)",
-        "      raise",
-        "    end",
-        "  end",
-        "",
-        "  def self.remove_shared_tables!",
-        "    connection = ActiveRecord::Base.connection",
-        "    existing_tables = SHARED_TABLES_IN_TENANTS.select do |table|",
-        "      connection.data_source_exists?(table)",
-        "    end",
-        "",
-        "    tables_with_data = existing_tables.filter_map do |table|",
-        "      quoted_table = connection.quote_table_name(table)",
-        "      row_count = connection.select_value(\"SELECT COUNT(*) FROM #{quoted_table}\").to_i",
-        "      \"#{table} (#{row_count} rows)\" if row_count.positive?",
-        "    end",
-        "",
-        "    if tables_with_data.any?",
-        "      raise SharedTableDataError,",
-        "            \"Refusing to remove tenant copies of shared tables containing data: #{tables_with_data.join(', ')}\"",
-        "    end",
-        "",
-        "    existing_tables.each do |table|",
-        "      connection.drop_table(table)",
-        "    end",
-        "  end",
-        "end"
-      ],
-      "lines": [
-        1,
-        null,
-        1,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        1,
-        null,
-        1,
-        17,
-        null,
-        null,
-        1,
-        6,
-        6,
-        1,
-        null,
-        null,
-        null,
-        5,
-        4,
-        null,
-        null,
-        1,
-        1,
-        1,
-        null,
-        null,
-        null,
-        1,
-        5,
-        5,
-        50,
-        null,
-        null,
-        5,
-        42,
-        42,
-        42,
-        null,
-        null,
-        5,
-        1,
-        null,
-        null,
-        null,
-        4,
-        32,
-        null,
-        null,
-        null
-      ],
-      "lines_covered_percent": 100.0,
-      "covered_lines": 26,
-      "missed_lines": 0,
-      "omitted_lines": 33,
-      "total_lines": 26
     },
     "config/application.rb": {
       "source": [
@@ -2019,9 +1208,14 @@
       "source": [
         "Rails.application.routes.draw do",
         "  # React pages: Rails sends the same page, React Router picks the screen",
-        "  root \"catalog#index\"",
-        "  get \"/products\", to: \"catalog#index\", as: :products",
-        "  get \"/products/:id\", to: \"catalog#index\", as: :product",
+        "  root to: redirect(\"/localFind\")",
+        "  get \"/localFind\", to: \"catalog#index\", as: :local_find",
+        "  get \"/localFind/products\", to: \"catalog#index\", as: :products",
+        "  get \"/localFind/products/:id\", to: \"catalog#index\", as: :product",
+        "  get \"/localFind/admin/dashboard\", to: \"admin_dashboard#show\"",
+        "  get \"/localFind/admin/security\", to: redirect(\"/localFind/admin/dashboard\")",
+        "  get \"/admin/dashboard\", to: redirect(\"/localFind/admin/dashboard\")",
+        "  get \"/admin/security\", to: redirect(\"/localFind/admin/security\")",
         "",
         "  get \"/favicon.ico\", to: redirect(\"/icon.png\")",
         "",
@@ -2029,20 +1223,10 @@
         "  namespace :api do",
         "    namespace :v1 do",
         "      get \"me\", to: \"users#me\"",
+        "      get \"auth/token\", to: \"auth_tokens#show\"",
         "      resources :categories, only: :index",
         "      resources :products, only: %i[index show]",
         "      resources :discounts, only: [ :index ]",
-        "",
-        "      namespace :admin do",
-        "        resources :categories, only: [ :create, :update, :destroy ]",
-        "        resources :products, only: [ :index, :create, :update, :destroy ]",
-        "        resources :discounts, only: [ :index, :create, :update, :destroy ]",
-        "        resources :login_audits, only: [ :index ]",
-        "        get :cart_metrics, to: \"cart_metrics#index\"",
-        "        get :users, to: \"platform#users\"",
-        "        get :stores, to: \"platform#stores\"",
-        "        get :audit_trail, to: \"platform#audit_trail\"",
-        "      end",
         "",
         "      namespace :users do",
         "        # Shared Cart (Available to all logged-in users)",
@@ -2069,18 +1253,18 @@
         "  end",
         "",
         "  # 1. Admin Authentication Routes",
-        "  get    \"/signup\", to: \"registrations#new\"",
-        "  post   \"/signup\", to: \"registrations#create\"",
-        "  get    \"/login\",  to: \"sessions#new\"",
-        "  post   \"/login\",  to: \"sessions#create\"",
-        "  delete \"/logout\", to: \"sessions#destroy\"",
+        "  get    \"/localFind/signup\", to: \"registrations#new\", as: :signup",
+        "  post   \"/localFind/signup\", to: \"registrations#create\"",
+        "  get    \"/localFind/login\",  to: \"sessions#new\", as: :login",
+        "  post   \"/localFind/login\",  to: \"sessions#create\"",
+        "  delete \"/localFind/logout\", to: \"sessions#destroy\", as: :logout",
         "",
         "  # 2. Single Tenant Admin Store Profile Routes",
         "  # Uses 'resource' (singular) because 1 user admin manages only 1 store profile",
         "",
         "",
-        "  # Catch-all route: Send all other HTML requests to React",
-        "  get \"*path\", to: \"catalog#index\", constraints: ->(request) do",
+        "  # Send remaining /localFind HTML routes to React for client-side routing.",
+        "  get \"/localFind/*path\", to: \"catalog#index\", constraints: ->(request) do",
         "    !request.xhr? && request.format.html?",
         "  end",
         "end"
@@ -2091,27 +1275,22 @@
         1,
         1,
         1,
-        null,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        1,
-        1,
-        1,
-        1,
         1,
         1,
         1,
         1,
         1,
         null,
+        1,
+        null,
+        null,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
         null,
         1,
         null,
@@ -2154,356 +1333,11 @@
         null,
         null
       ],
-      "lines_covered_percent": 97.36842105263158,
-      "covered_lines": 37,
+      "lines_covered_percent": 97.14285714285714,
+      "covered_lines": 34,
       "missed_lines": 1,
-      "omitted_lines": 29,
-      "total_lines": 38
-    },
-    "db/schema.rb": {
-      "source": [
-        "# This file is auto-generated from the current state of the database. Instead",
-        "# of editing this file, please use the migrations feature of Active Record to",
-        "# incrementally modify your database, and then regenerate this schema definition.",
-        "#",
-        "# This file is the source Rails uses to define your schema when running `bin/rails",
-        "# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to",
-        "# be faster and is potentially less error prone than running all of your",
-        "# migrations from scratch. Old migrations may fail to apply correctly if those",
-        "# migrations use external dependencies or application code.",
-        "#",
-        "# It's strongly recommended that you check this file into your version control system.",
-        "",
-        "ActiveRecord::Schema[8.1].define(version: 2026_10_27_120005) do",
-        "  create_table \"cart_items\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.bigint \"cart_id\", null: false",
-        "    t.integer \"quantity\"",
-        "    t.decimal \"unit_price\", precision: 10, scale: 2",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.bigint \"listing_reference_id\", null: false",
-        "    t.index [\"cart_id\"], name: \"index_cart_items_on_cart_id\"",
-        "    t.index [\"listing_reference_id\"], name: \"index_cart_items_on_listing_reference_id\"",
-        "  end",
-        "",
-        "  create_table \"carts\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.bigint \"user_id\", null: false",
-        "    t.bigint \"discount_id\"",
-        "    t.string \"status\", default: \"pending\"",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.string \"purchase_reference\"",
-        "    t.index [\"discount_id\"], name: \"index_carts_on_discount_id\"",
-        "    t.index [\"purchase_reference\"], name: \"index_carts_on_purchase_reference\", unique: true",
-        "    t.index [\"user_id\"], name: \"index_carts_on_user_id\"",
-        "  end",
-        "",
-        "  create_table \"categories\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.string \"name\", null: false",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.index [\"name\"], name: \"index_categories_on_name\", unique: true",
-        "  end",
-        "",
-        "  create_table \"discounts\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.string \"code\"",
-        "    t.decimal \"percentage\", precision: 5, scale: 2",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "  end",
-        "",
-        "  create_table \"listing_references\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.bigint \"tenant_id\", null: false",
-        "    t.bigint \"product_id\", null: false",
-        "    t.bigint \"tenant_listing_id\", null: false",
-        "    t.decimal \"price\", precision: 10, scale: 2, default: \"0.0\", null: false",
-        "    t.integer \"stock_quantity\", default: 0, null: false",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.index [\"product_id\"], name: \"index_listing_references_on_product_id\"",
-        "    t.index [\"tenant_id\", \"product_id\"], name: \"index_listing_references_on_tenant_id_and_product_id\", unique: true",
-        "    t.index [\"tenant_id\", \"tenant_listing_id\"], name: \"index_listing_references_on_tenant_id_and_tenant_listing_id\", unique: true",
-        "    t.index [\"tenant_id\"], name: \"index_listing_references_on_tenant_id\"",
-        "  end",
-        "",
-        "  create_table \"login_attempts\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.string \"email\"",
-        "    t.string \"ip_address\"",
-        "    t.string \"user_agent\"",
-        "    t.string \"status\"",
-        "    t.string \"failure_reason\"",
-        "    t.datetime \"login_timestamp\"",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "  end",
-        "",
-        "  create_table \"login_audits\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.bigint \"user_id\", null: false",
-        "    t.string \"ip_address\"",
-        "    t.string \"user_agent\"",
-        "    t.datetime \"login_timestamp\"",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.string \"email\"",
-        "    t.string \"status\"",
-        "    t.string \"failure_reason\"",
-        "    t.index [\"user_id\"], name: \"index_login_audits_on_user_id\"",
-        "  end",
-        "",
-        "  create_table \"product_listings\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.bigint \"product_id\", null: false",
-        "    t.decimal \"price\", precision: 10, scale: 2, default: \"0.0\", null: false",
-        "    t.integer \"stock_quantity\", default: 0, null: false",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.index [\"product_id\"], name: \"index_product_listings_on_product_id\"",
-        "  end",
-        "",
-        "  create_table \"products\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.bigint \"category_id\", null: false",
-        "    t.string \"name\", null: false",
-        "    t.text \"description\"",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.index [\"category_id\"], name: \"index_products_on_category_id\"",
-        "    t.index [\"name\"], name: \"index_products_on_name\"",
-        "  end",
-        "",
-        "  create_table \"purchase_histories\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.bigint \"user_id\", null: false",
-        "    t.bigint \"product_listing_id\", null: false",
-        "    t.bigint \"product_id\", null: false",
-        "    t.integer \"quantity\", null: false",
-        "    t.decimal \"unit_price\", precision: 10, scale: 2, null: false",
-        "    t.decimal \"total_price\", precision: 10, scale: 2, null: false",
-        "    t.string \"purchase_reference\", null: false",
-        "    t.string \"status\", default: \"pending\", null: false",
-        "    t.datetime \"purchased_at\"",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.decimal \"discount_amount\", precision: 10, scale: 2, default: \"0.0\", null: false",
-        "    t.index [\"product_id\"], name: \"index_purchase_histories_on_product_id\"",
-        "    t.index [\"purchase_reference\", \"product_listing_id\"], name: \"index_purchase_histories_on_reference_and_listing\", unique: true",
-        "    t.index [\"user_id\"], name: \"index_purchase_histories_on_user_id\"",
-        "  end",
-        "",
-        "  create_table \"tenants\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.bigint \"user_id\", null: false",
-        "    t.string \"name\", null: false",
-        "    t.string \"slug\", null: false",
-        "    t.text \"address\"",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.index [\"slug\"], name: \"index_tenants_on_slug\", unique: true",
-        "    t.index [\"user_id\"], name: \"index_tenants_on_user_id\", unique: true",
-        "  end",
-        "",
-        "  create_table \"users\", charset: \"utf8mb4\", collation: \"utf8mb4_0900_ai_ci\", force: :cascade do |t|",
-        "    t.string \"email\", null: false",
-        "    t.string \"password_digest\", null: false",
-        "    t.datetime \"created_at\", null: false",
-        "    t.datetime \"updated_at\", null: false",
-        "    t.boolean \"platform_admin\"",
-        "    t.boolean \"is_admin\"",
-        "    t.index [\"email\"], name: \"index_users_on_email\", unique: true",
-        "  end",
-        "",
-        "  create_table \"versions\", charset: \"utf8mb4\", collation: \"utf8mb4_general_ci\", force: :cascade do |t|",
-        "    t.string \"whodunnit\"",
-        "    t.datetime \"created_at\"",
-        "    t.bigint \"item_id\", null: false",
-        "    t.string \"item_type\", limit: 191, null: false",
-        "    t.string \"event\", null: false",
-        "    t.text \"object\", size: :long",
-        "    t.text \"object_changes\"",
-        "    t.index [\"item_type\", \"item_id\"], name: \"index_versions_on_item_type_and_item_id\"",
-        "  end",
-        "",
-        "  add_foreign_key \"cart_items\", \"carts\"",
-        "  add_foreign_key \"cart_items\", \"listing_references\"",
-        "  add_foreign_key \"carts\", \"discounts\"",
-        "  add_foreign_key \"carts\", \"users\"",
-        "  add_foreign_key \"listing_references\", \"products\"",
-        "  add_foreign_key \"listing_references\", \"tenants\"",
-        "  add_foreign_key \"login_audits\", \"users\"",
-        "  add_foreign_key \"products\", \"categories\"",
-        "  add_foreign_key \"tenants\", \"users\"",
-        "end"
-      ],
-      "lines": [
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null,
-        null,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        1,
-        null
-      ],
-      "lines_covered_percent": 100.0,
-      "covered_lines": 128,
-      "missed_lines": 0,
-      "omitted_lines": 39,
-      "total_lines": 128
+      "omitted_lines": 27,
+      "total_lines": 35
     }
   },
   "groups": {},
@@ -2693,6 +1527,540 @@
         },
         "db/schema.rb": {
           "line": 100.0
+        }
+      }
+    },
+    {
+      "created_at": "2026-11-02T12:00:20Z",
+      "branch": "micro-backend",
+      "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+      "totals": {
+        "line": 83.68
+      },
+      "groups": {},
+      "files": {
+        "app/controllers/admin_dashboard_controller.rb": {
+          "line": 87.5
+        },
+        "app/controllers/api/v1/auth_tokens_controller.rb": {
+          "line": 100.0
+        },
+        "app/controllers/application_controller.rb": {
+          "line": 66.66
+        },
+        "app/controllers/sessions_controller.rb": {
+          "line": 41.66
+        },
+        "app/helpers/application_helper.rb": {
+          "line": 100.0
+        },
+        "app/models/application_record.rb": {
+          "line": 100.0
+        },
+        "app/models/cart.rb": {
+          "line": 64.28
+        },
+        "app/models/cart_item.rb": {
+          "line": 100.0
+        },
+        "app/models/category.rb": {
+          "line": 100.0
+        },
+        "app/models/discount.rb": {
+          "line": 100.0
+        },
+        "app/models/listing_reference.rb": {
+          "line": 76.92
+        },
+        "app/models/login_attempt.rb": {
+          "line": 100.0
+        },
+        "app/models/login_audit.rb": {
+          "line": 100.0
+        },
+        "app/models/product.rb": {
+          "line": 100.0
+        },
+        "app/models/tenant.rb": {
+          "line": 100.0
+        },
+        "app/models/user.rb": {
+          "line": 100.0
+        },
+        "config/application.rb": {
+          "line": 100.0
+        },
+        "config/boot.rb": {
+          "line": 100.0
+        },
+        "config/environment.rb": {
+          "line": 100.0
+        },
+        "config/environments/test.rb": {
+          "line": 100.0
+        },
+        "config/initializers/apartment.rb": {
+          "line": 100.0
+        },
+        "config/initializers/assets.rb": {
+          "line": 100.0
+        },
+        "config/initializers/content_security_policy.rb": {
+          "line": 100.0
+        },
+        "config/initializers/filter_parameter_logging.rb": {
+          "line": 100.0
+        },
+        "config/initializers/inflections.rb": {
+          "line": 100.0
+        },
+        "config/routes.rb": {
+          "line": 97.14
+        }
+      }
+    },
+    {
+      "created_at": "2026-11-02T12:04:00Z",
+      "branch": "micro-backend",
+      "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+      "totals": {
+        "line": 83.68
+      },
+      "groups": {},
+      "files": {
+        "app/controllers/admin_dashboard_controller.rb": {
+          "line": 87.5
+        },
+        "app/controllers/api/v1/auth_tokens_controller.rb": {
+          "line": 100.0
+        },
+        "app/controllers/application_controller.rb": {
+          "line": 66.66
+        },
+        "app/controllers/sessions_controller.rb": {
+          "line": 41.66
+        },
+        "app/helpers/application_helper.rb": {
+          "line": 100.0
+        },
+        "app/models/application_record.rb": {
+          "line": 100.0
+        },
+        "app/models/cart.rb": {
+          "line": 64.28
+        },
+        "app/models/cart_item.rb": {
+          "line": 100.0
+        },
+        "app/models/category.rb": {
+          "line": 100.0
+        },
+        "app/models/discount.rb": {
+          "line": 100.0
+        },
+        "app/models/listing_reference.rb": {
+          "line": 76.92
+        },
+        "app/models/login_attempt.rb": {
+          "line": 100.0
+        },
+        "app/models/login_audit.rb": {
+          "line": 100.0
+        },
+        "app/models/product.rb": {
+          "line": 100.0
+        },
+        "app/models/tenant.rb": {
+          "line": 100.0
+        },
+        "app/models/user.rb": {
+          "line": 100.0
+        },
+        "config/application.rb": {
+          "line": 100.0
+        },
+        "config/boot.rb": {
+          "line": 100.0
+        },
+        "config/environment.rb": {
+          "line": 100.0
+        },
+        "config/environments/test.rb": {
+          "line": 100.0
+        },
+        "config/initializers/apartment.rb": {
+          "line": 100.0
+        },
+        "config/initializers/assets.rb": {
+          "line": 100.0
+        },
+        "config/initializers/content_security_policy.rb": {
+          "line": 100.0
+        },
+        "config/initializers/filter_parameter_logging.rb": {
+          "line": 100.0
+        },
+        "config/initializers/inflections.rb": {
+          "line": 100.0
+        },
+        "config/routes.rb": {
+          "line": 97.14
+        }
+      }
+    },
+    {
+      "created_at": "2026-11-02T12:12:56Z",
+      "branch": "micro-backend",
+      "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+      "totals": {
+        "line": 83.68
+      },
+      "groups": {},
+      "files": {
+        "app/controllers/admin_dashboard_controller.rb": {
+          "line": 87.5
+        },
+        "app/controllers/api/v1/auth_tokens_controller.rb": {
+          "line": 100.0
+        },
+        "app/controllers/application_controller.rb": {
+          "line": 66.66
+        },
+        "app/controllers/sessions_controller.rb": {
+          "line": 41.66
+        },
+        "app/helpers/application_helper.rb": {
+          "line": 100.0
+        },
+        "app/models/application_record.rb": {
+          "line": 100.0
+        },
+        "app/models/cart.rb": {
+          "line": 64.28
+        },
+        "app/models/cart_item.rb": {
+          "line": 100.0
+        },
+        "app/models/category.rb": {
+          "line": 100.0
+        },
+        "app/models/discount.rb": {
+          "line": 100.0
+        },
+        "app/models/listing_reference.rb": {
+          "line": 76.92
+        },
+        "app/models/login_attempt.rb": {
+          "line": 100.0
+        },
+        "app/models/login_audit.rb": {
+          "line": 100.0
+        },
+        "app/models/product.rb": {
+          "line": 100.0
+        },
+        "app/models/tenant.rb": {
+          "line": 100.0
+        },
+        "app/models/user.rb": {
+          "line": 100.0
+        },
+        "config/application.rb": {
+          "line": 100.0
+        },
+        "config/boot.rb": {
+          "line": 100.0
+        },
+        "config/environment.rb": {
+          "line": 100.0
+        },
+        "config/environments/test.rb": {
+          "line": 100.0
+        },
+        "config/initializers/apartment.rb": {
+          "line": 100.0
+        },
+        "config/initializers/assets.rb": {
+          "line": 100.0
+        },
+        "config/initializers/content_security_policy.rb": {
+          "line": 100.0
+        },
+        "config/initializers/filter_parameter_logging.rb": {
+          "line": 100.0
+        },
+        "config/initializers/inflections.rb": {
+          "line": 100.0
+        },
+        "config/routes.rb": {
+          "line": 97.14
+        }
+      }
+    },
+    {
+      "created_at": "2026-11-02T12:28:35Z",
+      "branch": "micro-backend",
+      "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+      "totals": {
+        "line": 83.68
+      },
+      "groups": {},
+      "files": {
+        "app/controllers/admin_dashboard_controller.rb": {
+          "line": 87.5
+        },
+        "app/controllers/api/v1/auth_tokens_controller.rb": {
+          "line": 100.0
+        },
+        "app/controllers/application_controller.rb": {
+          "line": 66.66
+        },
+        "app/controllers/sessions_controller.rb": {
+          "line": 41.66
+        },
+        "app/helpers/application_helper.rb": {
+          "line": 100.0
+        },
+        "app/models/application_record.rb": {
+          "line": 100.0
+        },
+        "app/models/cart.rb": {
+          "line": 64.28
+        },
+        "app/models/cart_item.rb": {
+          "line": 100.0
+        },
+        "app/models/category.rb": {
+          "line": 100.0
+        },
+        "app/models/discount.rb": {
+          "line": 100.0
+        },
+        "app/models/listing_reference.rb": {
+          "line": 76.92
+        },
+        "app/models/login_attempt.rb": {
+          "line": 100.0
+        },
+        "app/models/login_audit.rb": {
+          "line": 100.0
+        },
+        "app/models/product.rb": {
+          "line": 100.0
+        },
+        "app/models/tenant.rb": {
+          "line": 100.0
+        },
+        "app/models/user.rb": {
+          "line": 100.0
+        },
+        "config/application.rb": {
+          "line": 100.0
+        },
+        "config/boot.rb": {
+          "line": 100.0
+        },
+        "config/environment.rb": {
+          "line": 100.0
+        },
+        "config/environments/test.rb": {
+          "line": 100.0
+        },
+        "config/initializers/apartment.rb": {
+          "line": 100.0
+        },
+        "config/initializers/assets.rb": {
+          "line": 100.0
+        },
+        "config/initializers/content_security_policy.rb": {
+          "line": 100.0
+        },
+        "config/initializers/filter_parameter_logging.rb": {
+          "line": 100.0
+        },
+        "config/initializers/inflections.rb": {
+          "line": 100.0
+        },
+        "config/routes.rb": {
+          "line": 97.14
+        }
+      }
+    },
+    {
+      "created_at": "2026-11-02T12:34:32Z",
+      "branch": "micro-backend",
+      "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+      "totals": {
+        "line": 83.68
+      },
+      "groups": {},
+      "files": {
+        "app/controllers/admin_dashboard_controller.rb": {
+          "line": 87.5
+        },
+        "app/controllers/api/v1/auth_tokens_controller.rb": {
+          "line": 100.0
+        },
+        "app/controllers/application_controller.rb": {
+          "line": 66.66
+        },
+        "app/controllers/sessions_controller.rb": {
+          "line": 41.66
+        },
+        "app/helpers/application_helper.rb": {
+          "line": 100.0
+        },
+        "app/models/application_record.rb": {
+          "line": 100.0
+        },
+        "app/models/cart.rb": {
+          "line": 64.28
+        },
+        "app/models/cart_item.rb": {
+          "line": 100.0
+        },
+        "app/models/category.rb": {
+          "line": 100.0
+        },
+        "app/models/discount.rb": {
+          "line": 100.0
+        },
+        "app/models/listing_reference.rb": {
+          "line": 76.92
+        },
+        "app/models/login_attempt.rb": {
+          "line": 100.0
+        },
+        "app/models/login_audit.rb": {
+          "line": 100.0
+        },
+        "app/models/product.rb": {
+          "line": 100.0
+        },
+        "app/models/tenant.rb": {
+          "line": 100.0
+        },
+        "app/models/user.rb": {
+          "line": 100.0
+        },
+        "config/application.rb": {
+          "line": 100.0
+        },
+        "config/boot.rb": {
+          "line": 100.0
+        },
+        "config/environment.rb": {
+          "line": 100.0
+        },
+        "config/environments/test.rb": {
+          "line": 100.0
+        },
+        "config/initializers/apartment.rb": {
+          "line": 100.0
+        },
+        "config/initializers/assets.rb": {
+          "line": 100.0
+        },
+        "config/initializers/content_security_policy.rb": {
+          "line": 100.0
+        },
+        "config/initializers/filter_parameter_logging.rb": {
+          "line": 100.0
+        },
+        "config/initializers/inflections.rb": {
+          "line": 100.0
+        },
+        "config/routes.rb": {
+          "line": 97.14
+        }
+      }
+    },
+    {
+      "created_at": "2026-11-02T12:35:26Z",
+      "branch": "micro-backend",
+      "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+      "totals": {
+        "line": 83.68
+      },
+      "groups": {},
+      "files": {
+        "app/controllers/admin_dashboard_controller.rb": {
+          "line": 87.5
+        },
+        "app/controllers/api/v1/auth_tokens_controller.rb": {
+          "line": 100.0
+        },
+        "app/controllers/application_controller.rb": {
+          "line": 66.66
+        },
+        "app/controllers/sessions_controller.rb": {
+          "line": 41.66
+        },
+        "app/helpers/application_helper.rb": {
+          "line": 100.0
+        },
+        "app/models/application_record.rb": {
+          "line": 100.0
+        },
+        "app/models/cart.rb": {
+          "line": 64.28
+        },
+        "app/models/cart_item.rb": {
+          "line": 100.0
+        },
+        "app/models/category.rb": {
+          "line": 100.0
+        },
+        "app/models/discount.rb": {
+          "line": 100.0
+        },
+        "app/models/listing_reference.rb": {
+          "line": 76.92
+        },
+        "app/models/login_attempt.rb": {
+          "line": 100.0
+        },
+        "app/models/login_audit.rb": {
+          "line": 100.0
+        },
+        "app/models/product.rb": {
+          "line": 100.0
+        },
+        "app/models/tenant.rb": {
+          "line": 100.0
+        },
+        "app/models/user.rb": {
+          "line": 100.0
+        },
+        "config/application.rb": {
+          "line": 100.0
+        },
+        "config/boot.rb": {
+          "line": 100.0
+        },
+        "config/environment.rb": {
+          "line": 100.0
+        },
+        "config/environments/test.rb": {
+          "line": 100.0
+        },
+        "config/initializers/apartment.rb": {
+          "line": 100.0
+        },
+        "config/initializers/assets.rb": {
+          "line": 100.0
+        },
+        "config/initializers/content_security_policy.rb": {
+          "line": 100.0
+        },
+        "config/initializers/filter_parameter_logging.rb": {
+          "line": 100.0
+        },
+        "config/initializers/inflections.rb": {
+          "line": 100.0
+        },
+        "config/routes.rb": {
+          "line": 97.14
         }
       }
     }

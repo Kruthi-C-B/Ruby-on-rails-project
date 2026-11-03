@@ -1,0 +1,44 @@
+<% content_for :head do %>
+  <script type="systemjs-importmap">
+    {
+      "imports": {
+        "single-spa": "https://cdn.jsdelivr.net/npm/single-spa@6.0.3/lib/es5/system/single-spa.min.js",
+        "react": "https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js",
+        "react-dom": "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js",
+        "react-dom/client": "https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js",
+        "@localfind/admin-dashboard": "<%= Rails.env.development? ? "http://localhost:8500/localfind-admin-dashboard.js" : "/mfe/localfind-admin-dashboard.js" %>"
+      }
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/systemjs@6.15.1/dist/system.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/systemjs@6.15.1/dist/extras/amd.min.js"></script>
+<% end %>
+
+<div id="admin-dashboard-mfe"></div>
+
+<script>
+  System.import("single-spa")
+    .then(function (singleSpa) {
+      singleSpa.registerApplication({
+        name: "@localfind/admin-dashboard",
+        app: function () {
+          return System.import("@localfind/admin-dashboard");
+        },
+        activeWhen: "/localFind/admin/dashboard",
+        customProps: {
+          adminApiUrl: <%= raw(json_escape(ENV.fetch("ADMIN_API_URL", ENV.fetch("AUDIT_API_URL", "http://127.0.0.1:3100")).to_json)) %>,
+          securityLogsMfeUrl: <%= raw(json_escape(ENV.fetch(
+            "SECURITY_LOGS_MFE_URL",
+            Rails.env.development? ? "http://localhost:8501/localfind-security-logs.js" : "/mfe/localfind-security-logs.js"
+          ).to_json)) %>,
+          securityLogsApiUrl: <%= raw(json_escape(ENV.fetch("SECURITY_LOGS_API_URL", "http://127.0.0.1:3101").to_json)) %>
+        }
+      });
+      singleSpa.start();
+    })
+    .catch(function (error) {
+      console.error("Failed to start the admin dashboard microfrontend", error);
+      document.getElementById("admin-dashboard-mfe").textContent =
+        "The admin dashboard microfrontend could not be loaded.";
+    });
+</script>

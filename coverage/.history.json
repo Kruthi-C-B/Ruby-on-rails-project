@@ -188,6 +188,540 @@
             "line": 100.0
           }
         }
+      },
+      {
+        "created_at": "2026-11-02T12:00:20Z",
+        "branch": "micro-backend",
+        "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+        "totals": {
+          "line": 83.68
+        },
+        "groups": {},
+        "files": {
+          "app/controllers/admin_dashboard_controller.rb": {
+            "line": 87.5
+          },
+          "app/controllers/api/v1/auth_tokens_controller.rb": {
+            "line": 100.0
+          },
+          "app/controllers/application_controller.rb": {
+            "line": 66.66
+          },
+          "app/controllers/sessions_controller.rb": {
+            "line": 41.66
+          },
+          "app/helpers/application_helper.rb": {
+            "line": 100.0
+          },
+          "app/models/application_record.rb": {
+            "line": 100.0
+          },
+          "app/models/cart.rb": {
+            "line": 64.28
+          },
+          "app/models/cart_item.rb": {
+            "line": 100.0
+          },
+          "app/models/category.rb": {
+            "line": 100.0
+          },
+          "app/models/discount.rb": {
+            "line": 100.0
+          },
+          "app/models/listing_reference.rb": {
+            "line": 76.92
+          },
+          "app/models/login_attempt.rb": {
+            "line": 100.0
+          },
+          "app/models/login_audit.rb": {
+            "line": 100.0
+          },
+          "app/models/product.rb": {
+            "line": 100.0
+          },
+          "app/models/tenant.rb": {
+            "line": 100.0
+          },
+          "app/models/user.rb": {
+            "line": 100.0
+          },
+          "config/application.rb": {
+            "line": 100.0
+          },
+          "config/boot.rb": {
+            "line": 100.0
+          },
+          "config/environment.rb": {
+            "line": 100.0
+          },
+          "config/environments/test.rb": {
+            "line": 100.0
+          },
+          "config/initializers/apartment.rb": {
+            "line": 100.0
+          },
+          "config/initializers/assets.rb": {
+            "line": 100.0
+          },
+          "config/initializers/content_security_policy.rb": {
+            "line": 100.0
+          },
+          "config/initializers/filter_parameter_logging.rb": {
+            "line": 100.0
+          },
+          "config/initializers/inflections.rb": {
+            "line": 100.0
+          },
+          "config/routes.rb": {
+            "line": 97.14
+          }
+        }
+      },
+      {
+        "created_at": "2026-11-02T12:04:00Z",
+        "branch": "micro-backend",
+        "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+        "totals": {
+          "line": 83.68
+        },
+        "groups": {},
+        "files": {
+          "app/controllers/admin_dashboard_controller.rb": {
+            "line": 87.5
+          },
+          "app/controllers/api/v1/auth_tokens_controller.rb": {
+            "line": 100.0
+          },
+          "app/controllers/application_controller.rb": {
+            "line": 66.66
+          },
+          "app/controllers/sessions_controller.rb": {
+            "line": 41.66
+          },
+          "app/helpers/application_helper.rb": {
+            "line": 100.0
+          },
+          "app/models/application_record.rb": {
+            "line": 100.0
+          },
+          "app/models/cart.rb": {
+            "line": 64.28
+          },
+          "app/models/cart_item.rb": {
+            "line": 100.0
+          },
+          "app/models/category.rb": {
+            "line": 100.0
+          },
+          "app/models/discount.rb": {
+            "line": 100.0
+          },
+          "app/models/listing_reference.rb": {
+            "line": 76.92
+          },
+          "app/models/login_attempt.rb": {
+            "line": 100.0
+          },
+          "app/models/login_audit.rb": {
+            "line": 100.0
+          },
+          "app/models/product.rb": {
+            "line": 100.0
+          },
+          "app/models/tenant.rb": {
+            "line": 100.0
+          },
+          "app/models/user.rb": {
+            "line": 100.0
+          },
+          "config/application.rb": {
+            "line": 100.0
+          },
+          "config/boot.rb": {
+            "line": 100.0
+          },
+          "config/environment.rb": {
+            "line": 100.0
+          },
+          "config/environments/test.rb": {
+            "line": 100.0
+          },
+          "config/initializers/apartment.rb": {
+            "line": 100.0
+          },
+          "config/initializers/assets.rb": {
+            "line": 100.0
+          },
+          "config/initializers/content_security_policy.rb": {
+            "line": 100.0
+          },
+          "config/initializers/filter_parameter_logging.rb": {
+            "line": 100.0
+          },
+          "config/initializers/inflections.rb": {
+            "line": 100.0
+          },
+          "config/routes.rb": {
+            "line": 97.14
+          }
+        }
+      },
+      {
+        "created_at": "2026-11-02T12:12:56Z",
+        "branch": "micro-backend",
+        "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+        "totals": {
+          "line": 83.68
+        },
+        "groups": {},
+        "files": {
+          "app/controllers/admin_dashboard_controller.rb": {
+            "line": 87.5
+          },
+          "app/controllers/api/v1/auth_tokens_controller.rb": {
+            "line": 100.0
+          },
+          "app/controllers/application_controller.rb": {
+            "line": 66.66
+          },
+          "app/controllers/sessions_controller.rb": {
+            "line": 41.66
+          },
+          "app/helpers/application_helper.rb": {
+            "line": 100.0
+          },
+          "app/models/application_record.rb": {
+            "line": 100.0
+          },
+          "app/models/cart.rb": {
+            "line": 64.28
+          },
+          "app/models/cart_item.rb": {
+            "line": 100.0
+          },
+          "app/models/category.rb": {
+            "line": 100.0
+          },
+          "app/models/discount.rb": {
+            "line": 100.0
+          },
+          "app/models/listing_reference.rb": {
+            "line": 76.92
+          },
+          "app/models/login_attempt.rb": {
+            "line": 100.0
+          },
+          "app/models/login_audit.rb": {
+            "line": 100.0
+          },
+          "app/models/product.rb": {
+            "line": 100.0
+          },
+          "app/models/tenant.rb": {
+            "line": 100.0
+          },
+          "app/models/user.rb": {
+            "line": 100.0
+          },
+          "config/application.rb": {
+            "line": 100.0
+          },
+          "config/boot.rb": {
+            "line": 100.0
+          },
+          "config/environment.rb": {
+            "line": 100.0
+          },
+          "config/environments/test.rb": {
+            "line": 100.0
+          },
+          "config/initializers/apartment.rb": {
+            "line": 100.0
+          },
+          "config/initializers/assets.rb": {
+            "line": 100.0
+          },
+          "config/initializers/content_security_policy.rb": {
+            "line": 100.0
+          },
+          "config/initializers/filter_parameter_logging.rb": {
+            "line": 100.0
+          },
+          "config/initializers/inflections.rb": {
+            "line": 100.0
+          },
+          "config/routes.rb": {
+            "line": 97.14
+          }
+        }
+      },
+      {
+        "created_at": "2026-11-02T12:28:35Z",
+        "branch": "micro-backend",
+        "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+        "totals": {
+          "line": 83.68
+        },
+        "groups": {},
+        "files": {
+          "app/controllers/admin_dashboard_controller.rb": {
+            "line": 87.5
+          },
+          "app/controllers/api/v1/auth_tokens_controller.rb": {
+            "line": 100.0
+          },
+          "app/controllers/application_controller.rb": {
+            "line": 66.66
+          },
+          "app/controllers/sessions_controller.rb": {
+            "line": 41.66
+          },
+          "app/helpers/application_helper.rb": {
+            "line": 100.0
+          },
+          "app/models/application_record.rb": {
+            "line": 100.0
+          },
+          "app/models/cart.rb": {
+            "line": 64.28
+          },
+          "app/models/cart_item.rb": {
+            "line": 100.0
+          },
+          "app/models/category.rb": {
+            "line": 100.0
+          },
+          "app/models/discount.rb": {
+            "line": 100.0
+          },
+          "app/models/listing_reference.rb": {
+            "line": 76.92
+          },
+          "app/models/login_attempt.rb": {
+            "line": 100.0
+          },
+          "app/models/login_audit.rb": {
+            "line": 100.0
+          },
+          "app/models/product.rb": {
+            "line": 100.0
+          },
+          "app/models/tenant.rb": {
+            "line": 100.0
+          },
+          "app/models/user.rb": {
+            "line": 100.0
+          },
+          "config/application.rb": {
+            "line": 100.0
+          },
+          "config/boot.rb": {
+            "line": 100.0
+          },
+          "config/environment.rb": {
+            "line": 100.0
+          },
+          "config/environments/test.rb": {
+            "line": 100.0
+          },
+          "config/initializers/apartment.rb": {
+            "line": 100.0
+          },
+          "config/initializers/assets.rb": {
+            "line": 100.0
+          },
+          "config/initializers/content_security_policy.rb": {
+            "line": 100.0
+          },
+          "config/initializers/filter_parameter_logging.rb": {
+            "line": 100.0
+          },
+          "config/initializers/inflections.rb": {
+            "line": 100.0
+          },
+          "config/routes.rb": {
+            "line": 97.14
+          }
+        }
+      },
+      {
+        "created_at": "2026-11-02T12:34:32Z",
+        "branch": "micro-backend",
+        "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+        "totals": {
+          "line": 83.68
+        },
+        "groups": {},
+        "files": {
+          "app/controllers/admin_dashboard_controller.rb": {
+            "line": 87.5
+          },
+          "app/controllers/api/v1/auth_tokens_controller.rb": {
+            "line": 100.0
+          },
+          "app/controllers/application_controller.rb": {
+            "line": 66.66
+          },
+          "app/controllers/sessions_controller.rb": {
+            "line": 41.66
+          },
+          "app/helpers/application_helper.rb": {
+            "line": 100.0
+          },
+          "app/models/application_record.rb": {
+            "line": 100.0
+          },
+          "app/models/cart.rb": {
+            "line": 64.28
+          },
+          "app/models/cart_item.rb": {
+            "line": 100.0
+          },
+          "app/models/category.rb": {
+            "line": 100.0
+          },
+          "app/models/discount.rb": {
+            "line": 100.0
+          },
+          "app/models/listing_reference.rb": {
+            "line": 76.92
+          },
+          "app/models/login_attempt.rb": {
+            "line": 100.0
+          },
+          "app/models/login_audit.rb": {
+            "line": 100.0
+          },
+          "app/models/product.rb": {
+            "line": 100.0
+          },
+          "app/models/tenant.rb": {
+            "line": 100.0
+          },
+          "app/models/user.rb": {
+            "line": 100.0
+          },
+          "config/application.rb": {
+            "line": 100.0
+          },
+          "config/boot.rb": {
+            "line": 100.0
+          },
+          "config/environment.rb": {
+            "line": 100.0
+          },
+          "config/environments/test.rb": {
+            "line": 100.0
+          },
+          "config/initializers/apartment.rb": {
+            "line": 100.0
+          },
+          "config/initializers/assets.rb": {
+            "line": 100.0
+          },
+          "config/initializers/content_security_policy.rb": {
+            "line": 100.0
+          },
+          "config/initializers/filter_parameter_logging.rb": {
+            "line": 100.0
+          },
+          "config/initializers/inflections.rb": {
+            "line": 100.0
+          },
+          "config/routes.rb": {
+            "line": 97.14
+          }
+        }
+      },
+      {
+        "created_at": "2026-11-02T12:35:26Z",
+        "branch": "micro-backend",
+        "commit": "c0fa1898927a40031cab5ece1dfa7f20d4b29236",
+        "totals": {
+          "line": 83.68
+        },
+        "groups": {},
+        "files": {
+          "app/controllers/admin_dashboard_controller.rb": {
+            "line": 87.5
+          },
+          "app/controllers/api/v1/auth_tokens_controller.rb": {
+            "line": 100.0
+          },
+          "app/controllers/application_controller.rb": {
+            "line": 66.66
+          },
+          "app/controllers/sessions_controller.rb": {
+            "line": 41.66
+          },
+          "app/helpers/application_helper.rb": {
+            "line": 100.0
+          },
+          "app/models/application_record.rb": {
+            "line": 100.0
+          },
+          "app/models/cart.rb": {
+            "line": 64.28
+          },
+          "app/models/cart_item.rb": {
+            "line": 100.0
+          },
+          "app/models/category.rb": {
+            "line": 100.0
+          },
+          "app/models/discount.rb": {
+            "line": 100.0
+          },
+          "app/models/listing_reference.rb": {
+            "line": 76.92
+          },
+          "app/models/login_attempt.rb": {
+            "line": 100.0
+          },
+          "app/models/login_audit.rb": {
+            "line": 100.0
+          },
+          "app/models/product.rb": {
+            "line": 100.0
+          },
+          "app/models/tenant.rb": {
+            "line": 100.0
+          },
+          "app/models/user.rb": {
+            "line": 100.0
+          },
+          "config/application.rb": {
+            "line": 100.0
+          },
+          "config/boot.rb": {
+            "line": 100.0
+          },
+          "config/environment.rb": {
+            "line": 100.0
+          },
+          "config/environments/test.rb": {
+            "line": 100.0
+          },
+          "config/initializers/apartment.rb": {
+            "line": 100.0
+          },
+          "config/initializers/assets.rb": {
+            "line": 100.0
+          },
+          "config/initializers/content_security_policy.rb": {
+            "line": 100.0
+          },
+          "config/initializers/filter_parameter_logging.rb": {
+            "line": 100.0
+          },
+          "config/initializers/inflections.rb": {
+            "line": 100.0
+          },
+          "config/routes.rb": {
+            "line": 97.14
+          }
+        }
       }
     ]
   }

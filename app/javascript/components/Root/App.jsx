@@ -3,7 +3,6 @@ import { Redirect, Route, Switch } from "react-router-dom";
 import CatalogPage from "./CatalogPage";
 import ProductPage from "./ProductPage";
 import CartPage from "./CartPage";
-import AdminDashboard from "../Admin/AdminDashboard";
 import StoreOwnerDashboard from "../StoreOwner/StoreOwnerDashboard";
 import EditStoreProfile from "../StoreOwner/EditStoreProfile";
 import CreateStoreProfile from "../StoreOwner/CreateStoreProfile";
@@ -34,10 +33,6 @@ export default function App({ storeName }) {
 
       <Route exact path="/localFind/tenant/edit">
         <EditStoreProfile />
-      </Route>
-
-      <Route exact path="/localFind/admin/dashboard">
-        <AdminDashboard />
       </Route>
 
       <Route exact path="/admin/dashboard">

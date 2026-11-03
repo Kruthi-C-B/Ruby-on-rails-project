@@ -1,0 +1,27 @@
+.lf-page { max-width: 1100px; margin: 0 auto; padding: 24px; color: #222; font: 16px/1.5 Arial, sans-serif; }
+.lf-page-header { margin-bottom: 24px; }
+.lf-page-header h1 { margin: 0; }
+.lf-page-header p, .lf-card p { color: #666; }
+.lf-admin-panel { margin: 16px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+.lf-admin-panel h2, .lf-card__title { margin-top: 0; }
+.lf-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 14px; border: 1px solid transparent; border-radius: 5px; font: inherit; font-weight: 600; text-decoration: none; cursor: pointer; }
+.lf-button--small { min-height: 32px; padding: 5px 10px; font-size: .9rem; }
+.lf-button--large { min-height: 48px; padding: 11px 18px; }
+.lf-button--primary { background: #111; color: #fff; }
+.lf-button--secondary { border-color: #ddd; background: #eee; color: #222; }
+.lf-button--outline { border-color: #555; background: transparent; color: #333; }
+.lf-button--danger { background: #b42318; color: #fff; }
+.lf-field { display: grid; gap: 5px; margin: 10px 0; }
+.lf-field__label { font-weight: 600; }
+.lf-input { width: 100%; min-height: 40px; box-sizing: border-box; padding: 8px 10px; border: 1px solid #aaa; border-radius: 4px; background: #fff; font: inherit; }
+.lf-alert { margin: 12px 0; padding: 10px 16px; border-radius: 5px; background: #f8d7da; color: #721c24; }
+.lf-alert--success { background: #d1e7dd; color: #0f5132; }
+.lf-empty-state { padding: 24px; border: 1px dashed #bbb; border-radius: 8px; text-align: center; color: #666; }
+.lf-empty-state h2 { color: #222; }
+.lf-spinner-wrap { display: flex; align-items: center; gap: 10px; padding: 16px; color: #666; }
+.lf-spinner { width: 20px; height: 20px; border: 2px solid #333; border-right-color: transparent; border-radius: 50%; animation: lf-spin .7s linear infinite; }
+.lf-table-scroll, .lf-category-filter { display: flex; gap: 10px; flex-wrap: wrap; overflow-x: auto; }
+.lf-admin-panel table { width: 100%; border-collapse: collapse; }
+.lf-admin-panel th, .lf-admin-panel td { padding: 8px; border-bottom: 1px solid #ddd; text-align: left; }
+.lf-admin-panel form { display: grid; gap: 10px; }
+@keyframes lf-spin { to { transform: rotate(360deg); } }

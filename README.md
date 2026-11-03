@@ -27,23 +27,38 @@ and allocated across tenant-local purchase rows so order history records the
 actual amount paid. The discount-total migration also corrects completed
 discounted orders created before this change.
 
-## Login audit microfrontend
+## Admin dashboard microfrontend
 
-The admin login audit screen is a standalone single-spa microfrontend under
-`mfe/login-audit`. Rails serves the `/admin/security` page and its JSON API;
-the browser loads the MFE separately from port 8500 in development.
+The platform admin dashboard is a standalone single-spa microfrontend under
+`mfe/admin-dashboard`. Its API is the `admin-dashboard-api` service under
+`services/admin-dashboard-api`. Security Logs is a separately built child
+microfrontend under `mfe/security-logs`, loaded and mounted by the dashboard
+when that tab is selected. Other dashboard tabs call the `admin-dashboard-api`
+service; the child MFE calls its own `security-logs-api` service. Rails owns
+browser login and session validation and issues short-lived JWTs that each
+backend validates, including the admin role.
 
-After starting Rails on port 3000, start the MFE with Docker Compose:
+Start the Rails app, API service, and dashboard MFE with Docker Compose:
 
 ```sh
-docker compose up -d login-audit
-docker compose logs -f login-audit
+docker compose up -d web admin-dashboard-api admin-dashboard security-logs security-logs-api
+docker compose logs -f admin-dashboard-api admin-dashboard security-logs security-logs-api
 ```
 
-Sign in as a platform admin and open `http://localhost:3000/admin/security`.
-For a production asset, run `npm run build` in `mfe/login-audit` and copy
-`mfe/login-audit/dist/localfind-login-audit.js` to
-`public/mfe/localfind-login-audit.js`.
+The parent dashboard MFE is served on port `8500`; the nested Security Logs MFE
+is served independently on port `8501`, and its dedicated micro-backend runs
+on port `3101`.
+
+Sign in as a platform admin and open
+`http://localhost:3000/localFind/admin/dashboard`. The old `/admin/dashboard`
+and `/admin/security` URLs redirect to their prefixed dashboard paths.
+
+For a production asset, run `npm run build` in `mfe/admin-dashboard` and copy
+`mfe/admin-dashboard/dist/localfind-admin-dashboard.js` to
+`public/mfe/localfind-admin-dashboard.js`. Build the child bundle in
+`mfe/security-logs` and copy
+`mfe/security-logs/dist/localfind-security-logs.js` to
+`public/mfe/localfind-security-logs.js`.
 
 ## Reusable React UI components
 

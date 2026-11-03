@@ -113,7 +113,7 @@ RSpec.describe "Platform admin API workflow", type: :request do
     @tenant = Tenant.create!(
       user: @owner,
       name: "Admin API store",
-      slug: "admin-api-#{SecureRandom.hex(4)}"
+      slug: "admin-dashboard-api-#{SecureRandom.hex(4)}"
     )
     TenantDatabase.provision!(@tenant)
 

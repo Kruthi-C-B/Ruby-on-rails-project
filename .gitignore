@@ -7,6 +7,10 @@
 # Ignore bundler config.
 /.bundle
 
+# Node dependencies
+node_modules/
+**/node_modules/
+
 # Ignore all environment files.
 /.env*
 
@@ -37,8 +41,8 @@
 /public/packs
 /public/packs-test
 /node_modules
-mfe/login-audit/node_modules/
-mfe/login-audit/dist/
+mfe/admin-dashboard/node_modules/
+mfe/admin-dashboard/dist/
 /yarn-error.log
 yarn-debug.log*
 .yarn-integrity

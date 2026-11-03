@@ -4,7 +4,8 @@ Rails.application.routes.draw do
   get "/localFind", to: "catalog#index", as: :local_find
   get "/localFind/products", to: "catalog#index", as: :products
   get "/localFind/products/:id", to: "catalog#index", as: :product
-  get "/localFind/admin/security", to: "admin_security#show"
+  get "/localFind/admin/dashboard", to: "admin_dashboard#show"
+  get "/localFind/admin/security", to: redirect("/localFind/admin/dashboard")
   get "/admin/dashboard", to: redirect("/localFind/admin/dashboard")
   get "/admin/security", to: redirect("/localFind/admin/security")
 
@@ -18,16 +19,6 @@ Rails.application.routes.draw do
       resources :categories, only: :index
       resources :products, only: %i[index show]
       resources :discounts, only: [ :index ]
-
-      namespace :admin do
-        resources :categories, only: [ :create, :update, :destroy ]
-        resources :products, only: [ :index, :create, :update, :destroy ]
-        resources :discounts, only: [ :index, :create, :update, :destroy ]
-        get :cart_metrics, to: "cart_metrics#index"
-        get :users, to: "platform#users"
-        get :stores, to: "platform#stores"
-        get :audit_trail, to: "platform#audit_trail"
-      end
 
       namespace :users do
         # Shared Cart (Available to all logged-in users)
