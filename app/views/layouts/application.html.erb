@@ -28,8 +28,9 @@
         <div style="font-size: 22px; font-weight: bold;">
           <%= link_to "LocalFind", root_path, style: "text-decoration: none; color: #333;" %>
         </div>
-        <% unless current_page?(root_path) %>
-          <%= link_to "← Back to Catalog", root_path, style: "color: #6f42c1; text-decoration: underline;" %>
+        <% unless current_page?("/localFind") || current_page?("/") %>
+          <%= link_to "← Back to Catalog", "/localFind",
+              style: "color: #6f42c1; text-decoration: underline;" %>
         <% end %>
       </div>
 

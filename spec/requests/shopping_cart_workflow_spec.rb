@@ -18,10 +18,10 @@ RSpec.describe "Shopping cart workflow", type: :request do
     @tenant = Tenant.create!(
       user: @owner,
       name: "Cart workflow store",
-      slug: "cart-workflow-#{SecureRandom.hex(4)}",
+      slug: "cartworkflow#{SecureRandom.hex(4).tr('0-9', 'abcdefghij')}",
       address: "10 Market Street"
     )
-    TenantDatabase.provision!(@tenant)
+    TenantDatabase.provision_new!(@tenant)
     @references = @products.map do |product|
       listing = TenantDatabase.switch(@tenant) do
         ProductListing.create!(product_id: product.id, price: "0.03", stock_quantity: 10)
@@ -48,14 +48,14 @@ RSpec.describe "Shopping cart workflow", type: :request do
     end
 
     if @tenant
-      database_name = Apartment::Tenant.environmentify(@tenant.slug)
+      database_name = Apartment::Tenant.environmentify(@tenant.apartment_tenant_name)
       if Apartment.connection.select_values("SHOW DATABASES").include?(database_name)
         TenantDatabase.switch(@tenant) do
           PurchaseHistory.delete_all
           ProductListing.delete_all
           PaperTrail::Version.delete_all
         end
-        Apartment::Tenant.drop(@tenant.slug)
+        Apartment::Tenant.drop(@tenant.apartment_tenant_name)
       end
       ListingReference.where(tenant_id: @tenant.id).delete_all
       @tenant.destroy! if @tenant.persisted?
@@ -188,7 +188,7 @@ RSpec.describe "Shopping cart workflow", type: :request do
 
     post "/api/v1/users/cart/checkout"
     expect(response).to have_http_status(:unprocessable_content)
-    expect(JSON.parse(response.body)).to eq("error" => "listing disappeared")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "listing disappeared" ])
   end
 
   it "rechecks inventory immediately before creating a purchase" do
@@ -208,7 +208,7 @@ RSpec.describe "Shopping cart workflow", type: :request do
     post "/api/v1/users/cart/checkout"
 
     expect(response).to have_http_status(:unprocessable_content)
-    expect(JSON.parse(response.body)).to eq("error" => "A product does not have enough stock.")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "A product does not have enough stock." ])
   end
 
   def create_user(label, admin: false)

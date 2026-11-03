@@ -53,13 +53,16 @@ owner = User.find_or_create_by!(email: "owner@localfind.com") do |user|
 end
 store = Tenant.find_or_create_by!(user: owner) do |tenant|
   tenant.name = "Corner Store"
-  tenant.slug = "corner-store"
+  tenant.slug = "cornerstore"
   tenant.address = "12 Main Street"
 end
-[ [ "Wireless Headphones", 59.99, 25 ], [ "Ceramic Coffee Mug", 8.5, 4 ], [ "Almond Milk", 3.25, 0 ] ].each do |name, price, stock|
-  ProductListing.find_or_create_by!(tenant: store, product: Product.find_by!(name: name)) do |listing|
-    listing.price = price
-    listing.stock_quantity = stock
+TenantDatabase.provision_new!(store)
+TenantDatabase.switch(store) do
+  [ [ "Wireless Headphones", 59.99, 25 ], [ "Ceramic Coffee Mug", 8.5, 4 ], [ "Almond Milk", 3.25, 0 ] ].each do |name, price, stock|
+    ProductListing.find_or_create_by!(product: Product.find_by!(name: name)) do |listing|
+      listing.price = price
+      listing.stock_quantity = stock
+    end
   end
 end
 puts "Demo store created: owner@localfind.com / secret123"

@@ -9,16 +9,11 @@ Tenant-specific product listings and purchase history are stored in the
 tenant's Apartment database. Shared `listing_references` rows connect catalog
 products and cart items to tenant-local listings.
 
-Run migrations from the Rails Docker service after pulling schema changes:
+Run schema migrations from the Rails Docker service after pulling schema changes:
 
 ```sh
 docker compose exec web bundle exec rails db:migrate
 ```
-
-The listing migrations provision databases for existing tenants and transfer
-their legacy product listings. They also remove unused copies of shared tables
-from existing tenant databases. New store tenants are provisioned without those
-shared-table copies.
 
 Checkout writes each store's purchase history and PaperTrail versions to that
 store's tenant database; a cart containing products from multiple stores is
@@ -26,6 +21,54 @@ recorded separately in each store database. Cart discounts are rounded to cents
 and allocated across tenant-local purchase rows so order history records the
 actual amount paid. The discount-total migration also corrects completed
 discounted orders created before this change.
+
+Tenant databases use the stable `localfind_tenant_<id>` name (with a
+non-production environment prefix), so store owners can change slugs without
+moving or renaming data. New databases receive a tenant-ID ownership marker.
+Provisioning refuses databases without a matching marker, and it does not copy
+legacy data during normal requests.
+
+Tenant slugs now allow ASCII letters only. Check existing records before
+releasing the validation change:
+
+```sh
+docker compose exec web bundle exec rails tenant_databases:check_slugs
+```
+
+Resolve any reported slugs manually; the application does not rewrite existing
+store URLs. The migration clears prior `database_migrated_at` values because
+those values were set without verifiable ownership or copy checks.
+
+Legacy databases have no ownership marker, so the migration intentionally
+requires an operator to verify each database from a trusted backup/inventory
+before attesting ownership. `adopt` only writes ownership metadata; it never
+copies or deletes application data. Supply the exact database name as MySQL
+reports it (including the environment prefix in development/test):
+
+```sh
+docker compose exec -e TENANT_ID=42 -e DATABASE=development_cornerstore -e CONFIRM_TENANT_ID=42 web bundle exec rails tenant_databases:adopt
+docker compose exec -e TENANT_ID=42 -e DATABASE=development_localfind_tenant_42 -e CONFIRM_TENANT_ID=42 web bundle exec rails tenant_databases:adopt
+```
+
+After attesting both the source and target database ownership, run the
+idempotent copy-and-verify task. If the slug has changed, provide the legacy
+database name explicitly. A missing legacy database requires an explicit
+confirmation:
+
+```sh
+docker compose exec -e TENANT_ID=42 web bundle exec rails tenant_databases:migrate
+docker compose exec -e TENANT_ID=42 -e LEGACY_DATABASE=development_oldstore web bundle exec rails tenant_databases:migrate
+docker compose exec -e TENANT_ID=42 -e NO_LEGACY=1 web bundle exec rails tenant_databases:migrate
+docker compose exec web bundle exec rails tenant_databases:verify
+```
+
+Back up the shared and tenant databases before this process, and stop or drain
+any application instances that could still write to the legacy databases while
+the copy runs. Do not attest a database based only on its name. The source
+database is retained, and copy conflicts or mismatched rows stop the migration
+without setting its completion marker. `tenant_databases:verify` is read-only.
+API errors use an `errors` array, including authentication and not-found
+responses.
 
 ## Admin dashboard microfrontend
 
@@ -64,7 +107,9 @@ For a production asset, run `npm run build` in `mfe/admin-dashboard` and copy
 
 Shared UI primitives and product components live in
 `app/javascript/components/ui` and `app/javascript/components/product`. The
-React app loads their shared styles through `Root/catalog.css`. Import the
+React app loads their shared styles through
+`app/javascript/components/pages/shop/catalog.css`. Shopper and store-owner
+screens are grouped under `app/javascript/components/pages`. Import the
 primitives from the UI barrel:
 
 ```jsx

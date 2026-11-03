@@ -55,7 +55,7 @@ module Api
 
         def tenant_product_records_exist?(product_id)
           Tenant.all.any? do |tenant|
-            Apartment::Tenant.switch(tenant.slug) do
+            Apartment::Tenant.switch(tenant.database_tenant_name) do
               ProductListing.exists?(product_id: product_id) ||
                 PurchaseHistory.exists?(product_id: product_id)
             end

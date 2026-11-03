@@ -55,16 +55,11 @@ class CreateListingReferencesAndRouteCartItems < ActiveRecord::Migration[8.1]
             "Product listings reference missing tenants: #{missing_tenants.join(', ')}"
     end
 
-    tenant_databases = select_values("SHOW DATABASES")
-
-    tenants.each_value do |tenant|
-      database_name = Apartment::Tenant.environmentify(tenant.slug)
-      TenantDatabase.provision!(tenant) unless tenant_databases.include?(database_name)
-    end
+    tenants.each_value { |tenant| TenantDatabase.provision!(tenant) }
 
     legacy_listings.group_by { |listing| listing["tenant_id"].to_i }.each do |tenant_id, listings|
       tenant = tenants.fetch(tenant_id)
-      Apartment::Tenant.switch(tenant.slug) do
+      TenantDatabase.switch(tenant) do
         connection.execute("SET FOREIGN_KEY_CHECKS = 0")
         listings.each do |listing|
           connection.execute(<<~SQL.squish)

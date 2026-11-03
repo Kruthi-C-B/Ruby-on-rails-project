@@ -6,7 +6,8 @@ async function fetchAudits(securityLogsApiUrl) {
     credentials: "same-origin",
   });
   if (!tokenResponse.ok) {
-    throw new Error(`Token request failed (${tokenResponse.status})`);
+    const data = await tokenResponse.json().catch(() => null);
+    throw new Error(responseErrorMessage(data, tokenResponse.status, "Token request failed"));
   }
   const { token } = await tokenResponse.json();
 
@@ -17,9 +18,19 @@ async function fetchAudits(securityLogsApiUrl) {
     },
   });
   if (!response.ok) {
-    throw new Error(`Audit request failed (${response.status})`);
+    const data = await response.json().catch(() => null);
+    throw new Error(responseErrorMessage(data, response.status, "Audit request failed"));
   }
   return response.json();
+}
+
+function responseErrorMessage(data, status, fallback) {
+  const errors = Array.isArray(data?.errors)
+    ? data.errors
+    : data?.error
+      ? [data.error]
+      : [];
+  return errors.length ? errors.join(", ") : `${fallback} (${status})`;
 }
 
 export default function SecurityLogs({ securityLogsApiUrl }) {

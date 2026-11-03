@@ -28,7 +28,7 @@ module Api
 
         def audit_trail
           entries = Tenant.all.flat_map do |tenant|
-            Apartment::Tenant.switch(tenant.slug) do
+            Apartment::Tenant.switch(tenant.database_tenant_name) do
               PaperTrail::Version
                 .where(item_type: %w[ProductListing PurchaseHistory])
                 .order(created_at: :desc)

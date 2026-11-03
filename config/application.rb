@@ -15,6 +15,9 @@ module LocalFind
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
+    serializers_path = Rails.root.join("app/serializers")
+    config.autoload_paths << serializers_path
+    config.eager_load_paths << serializers_path
 
     # Shakapacker compiles our JSX, so react-rails must not look for Sprockets
     config.react.sprockets_strategy = false

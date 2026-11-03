@@ -1,9 +1,41 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { fetchGet, fetchRequest } from "./api";
+import React, { useState } from "react";
+import { fetchRequest } from "./api";
+import CategoriesTab from "./CategoriesTab";
+import DiscountsTab from "./DiscountsTab";
+import ProductsTab from "./ProductsTab";
 import StoreAudit from "./StoreAudit";
 import SecurityLogsMicrofrontend from "./SecurityLogsMicrofrontend";
-import { Alert, Button, Card, EmptyState, Input, PageContainer, PageHeader, Select, Spinner } from "./ui";
+import useApi from "./useApi";
+import { Alert, Button, PageContainer, PageHeader, Spinner } from "./ui";
 import "./admin.css";
+
+const tabEndpoints = {
+  categories: "/api/v1/admin/categories",
+  products: "/api/v1/admin/products",
+  discounts: "/api/v1/admin/discounts",
+};
+
+const tabs = [
+  ["categories", "Categories"],
+  ["products", "Universal Products"],
+  ["discounts", "Global Discounts"],
+  ["security", "Security Logs"],
+  ["audit", "Store Audit"],
+];
+
+const tabsStyle = {
+  display: "flex",
+  gap: 10,
+  flexWrap: "wrap",
+  margin: "20px 0",
+};
+
+function validateProducts(data) {
+  if (!Array.isArray(data) || data.some((group) => !group || !Array.isArray(group.products))) {
+    throw new Error("Products API returned an invalid response. Please retry or contact support.");
+  }
+  return data;
+}
 
 export default function AdminDashboard({
   adminApiUrl,
@@ -12,85 +44,60 @@ export default function AdminDashboard({
 }) {
   const [activeTab, setActiveTab] = useState("categories");
   const [message, setMessage] = useState(null);
-
-  const [categories, setCategories] = useState([]);
-  const [products, setProducts] = useState([]);
   const [selectedProductCategory, setSelectedProductCategory] = useState(null);
-  const [discounts, setDiscounts] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState("");
   const [editingRecord, setEditingRecord] = useState(null);
 
-  const loadData = useCallback(async (tab) => {
-    const endpoints = {
-      categories: "/api/v1/admin/categories",
-      products: "/api/v1/admin/products",
-      discounts: "/api/v1/admin/discounts",
-    };
+  const categoriesApi = useApi(tabEndpoints.categories, adminApiUrl, {
+    enabled: activeTab === "categories",
+    initialData: [],
+  });
+  const productsApi = useApi(tabEndpoints.products, adminApiUrl, {
+    enabled: activeTab === "products",
+    initialData: [],
+    validate: validateProducts,
+  });
+  const discountsApi = useApi(tabEndpoints.discounts, adminApiUrl, {
+    enabled: activeTab === "discounts",
+    initialData: [],
+  });
 
-    if (!endpoints[tab]) return;
+  const apis = {
+    categories: categoriesApi,
+    products: productsApi,
+    discounts: discountsApi,
+  };
+  const activeApi = apis[activeTab];
+  const categories = categoriesApi.data;
+  const products = productsApi.data;
+  const discounts = discountsApi.data;
 
-    setLoading(true);
-    setLoadError("");
+  const loadData = (tab) => apis[tab]?.reload();
 
-    try {
-      const data = await fetchGet(endpoints[tab], adminApiUrl);
-
-      if (tab === "categories") setCategories(data);
-      if (tab === "products") {
-        if (!Array.isArray(data) || data.some((group) => !group || !Array.isArray(group.products))) {
-          throw new Error("Products API returned an invalid response. Please retry or contact support.");
-        }
-        setProducts(data);
-      }
-      if (tab === "discounts") setDiscounts(data);
-    } catch (err) {
-      console.error(err);
-      if (tab === "products") setProducts([]);
-      setLoadError(err.message || `Failed to load ${tab}.`);
-    } finally {
-      setLoading(false);
-    }
-  }, [adminApiUrl]);
-
-  useEffect(() => {
-    loadData(activeTab);
-  }, [activeTab, loadData]);
-
-  const handleSubmit = async (e, endpoint, payload, tab) => {
-    e.preventDefault();
+  const handleSubmit = async (event, endpoint, payload, tab) => {
+    event.preventDefault();
     setMessage(null);
 
     try {
       await fetchRequest(`/api/v1/admin/${endpoint}`, "POST", payload, adminApiUrl);
-
-      setMessage({
-        type: "success",
-        text: `Successfully created ${endpoint}!`,
-      });
-
-      e.target.reset();
-      await loadData(tab);
-    } catch (err) {
-      setMessage({
-        type: "error",
-        text: err.message || `Failed to create ${endpoint}.`,
-      });
+      setMessage({ type: "success", text: `Successfully created ${endpoint}!` });
+      event.target.reset();
+      loadData(tab);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message || `Failed to create ${endpoint}.` });
     }
   };
 
-  const handleUpdate = async (e, endpoint, payload, tab) => {
-    e.preventDefault();
+  const handleUpdate = async (event, endpoint, payload, tab) => {
+    event.preventDefault();
     setMessage(null);
 
     try {
       await fetchRequest(`/api/v1/admin/${endpoint}/${editingRecord.id}`, "PATCH", payload, adminApiUrl);
       setEditingRecord(null);
       setMessage({ type: "success", text: `Successfully updated ${endpoint.slice(0, -1)}.` });
-      await loadData(tab);
-    } catch (err) {
-      setMessage({ type: "error", text: err.message || `Failed to update ${endpoint}.` });
+      loadData(tab);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message || `Failed to update ${endpoint}.` });
     }
   };
 
@@ -102,9 +109,9 @@ export default function AdminDashboard({
       await fetchRequest(`/api/v1/admin/${endpoint}/${id}`, "DELETE", undefined, adminApiUrl);
       setEditingRecord(null);
       setMessage({ type: "success", text: `Successfully deleted ${label}.` });
-      await loadData(tab);
-    } catch (err) {
-      setMessage({ type: "error", text: err.message || `Failed to delete ${label}.` });
+      loadData(tab);
+    } catch (error) {
+      setMessage({ type: "error", text: error.message || `Failed to delete ${label}.` });
     }
   };
 
@@ -112,25 +119,9 @@ export default function AdminDashboard({
     setEditingRecord((current) => ({ ...current, [field]: value }));
   };
 
-  const tabs = [
-    ["categories", "Categories"],
-    ["products", "Universal Products"],
-    ["discounts", "Global Discounts"],
-    ["security", "Security Logs"],
-    ["audit", "Store Audit"],
-  ];
-
-  const visibleProductGroups = selectedProductCategory === null
-    ? products
-    : products.filter((group) => String(group.category_id) === String(selectedProductCategory));
-  const productCategoryOptions = categories.length > 0
-    ? categories
-    : products.map(({ category_id, category_name }) => ({ id: category_id, name: category_name }));
-
   return (
     <PageContainer className="lf-admin-dashboard">
       <PageHeader title="Platform Admin Dashboard" />
-
       <div style={tabsStyle}>
         {tabs.map(([key, label]) => (
           <Button
@@ -147,15 +138,10 @@ export default function AdminDashboard({
         ))}
       </div>
 
-      {message && (
-        <Alert variant={message.type}>
-          {message.text}
-        </Alert>
-      )}
-
-      {loadError && (
+      {message && <Alert variant={message.type}>{message.text}</Alert>}
+      {activeApi?.error && (
         <Alert>
-          {loadError}
+          {activeApi.error}
           <Button
             variant="outline"
             size="small"
@@ -166,477 +152,47 @@ export default function AdminDashboard({
           </Button>
         </Alert>
       )}
+      {activeApi?.loading && <Spinner label="Loading existing records…" />}
 
-      {loading && <Spinner label="Loading existing records…" />}
-
-      {/* CATEGORIES */}
       {activeTab === "categories" && (
-        <>
-          <Card as="section" className="lf-admin-panel">
-            <h2>Existing Categories ({categories.length})</h2>
-
-            {!loading && categories.length === 0 && (
-              <EmptyState title="No categories found yet." />
-            )}
-
-            {categories.length > 0 && (
-              <ul style={listStyle}>
-                {categories.map((cat) => (
-                  <li key={cat.id} style={listItemStyle}>
-                    {editingRecord?.type === "category" && editingRecord.id === cat.id ? (
-                      <form
-                        onSubmit={(e) =>
-                          handleUpdate(
-                            e,
-                            "categories",
-                            { category: { name: editingRecord.name.trim() } },
-                            "categories"
-                          )
-                        }
-                        style={inlineFormStyle}
-                      >
-                        <input
-                          aria-label={`Category ${cat.id} name`}
-                          value={editingRecord.name}
-                          onChange={(e) => changeEditingField("name", e.target.value)}
-                          required
-                          style={inputStyle}
-                        />
-                        <Button type="submit" size="small">Save</Button>
-                        <Button type="button" variant="outline" size="small" onClick={() => setEditingRecord(null)}>Cancel</Button>
-                      </form>
-                    ) : (
-                      <>
-                        <span><strong>{cat.name}</strong> <span style={mutedStyle}>ID: {cat.id}</span></span>
-                        <div style={actionButtonsStyle}>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="small"
-                            onClick={() => setEditingRecord({ type: "category", id: cat.id, name: cat.name })}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="danger"
-                            size="small"
-                            onClick={() => handleDelete("categories", cat.id, "categories", "category")}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-
-          <Card as="section" className="lf-admin-panel">
-            <h2>Add New Category</h2>
-
-            <form
-              onSubmit={(e) =>
-                handleSubmit(
-                  e,
-                  "categories",
-                  { category: { name: e.currentTarget.name.value.trim() } },
-                  "categories"
-                )
-              }
-            >
-              <Input
-                label="Category Name"
-                name="name"
-                required
-                style={inputStyle}
-                placeholder="e.g. Electronics, Home Goods"
-              />
-
-              <Button type="submit" size="large">
-                Create Category
-              </Button>
-            </form>
-          </Card>
-        </>
+        <CategoriesTab
+          categories={categories}
+          loading={categoriesApi.loading}
+          editingRecord={editingRecord}
+          setEditingRecord={setEditingRecord}
+          changeEditingField={changeEditingField}
+          handleSubmit={handleSubmit}
+          handleUpdate={handleUpdate}
+          handleDelete={handleDelete}
+        />
       )}
-
-      {/* UNIVERSAL PRODUCTS */}
       {activeTab === "products" && (
-        <>
-          <Card as="section" className="lf-admin-panel">
-            <h2>
-              Existing Universal Products (
-              {products.reduce((total, group) => total + group.products.length, 0)})
-            </h2>
-
-            <div className="lf-category-filter" role="group" aria-label="Filter products by category">
-              <Button
-                type="button"
-                size="small"
-                variant={selectedProductCategory === null ? "primary" : "secondary"}
-                aria-pressed={selectedProductCategory === null}
-                onClick={() => setSelectedProductCategory(null)}
-              >
-                All categories
-              </Button>
-              {productCategoryOptions.map((category) => (
-                <Button
-                  key={category.id}
-                  type="button"
-                  size="small"
-                  variant={String(selectedProductCategory) === String(category.id) ? "primary" : "secondary"}
-                  aria-pressed={String(selectedProductCategory) === String(category.id)}
-                  onClick={() => setSelectedProductCategory(category.id)}
-                >
-                  {category.name}
-                </Button>
-              ))}
-            </div>
-
-            {!loading && products.length === 0 && (
-              <EmptyState title="No products found yet." />
-            )}
-
-            {visibleProductGroups.length > 0 && (
-              visibleProductGroups.map((group) => (
-                <div key={group.category_id} style={{ marginTop: 24 }}>
-                  <h3>{group.category_name}</h3>
-                  <div style={tableWrapperStyle}>
-                    <table style={tableStyle}>
-                      <thead>
-                        <tr>
-                          <th style={cellStyle}>ID</th>
-                          <th style={cellStyle}>Product</th>
-                          <th style={cellStyle}>Description</th>
-                          <th style={cellStyle}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {group.products.map((product) => (
-                          <tr key={product.id}>
-                            <td style={cellStyle}>{product.id}</td>
-                            {editingRecord?.type === "product" && editingRecord.id === product.id ? (
-                              <>
-                                <td style={cellStyle}>
-                                  <input
-                                    aria-label={`Product ${product.id} name`}
-                                    value={editingRecord.name}
-                                    onChange={(e) => changeEditingField("name", e.target.value)}
-                                    required
-                                    style={inputStyle}
-                                  />
-                                  <select
-                                    aria-label={`Product ${product.id} category`}
-                                    value={editingRecord.category_id}
-                                    onChange={(e) => changeEditingField("category_id", e.target.value)}
-                                    required
-                                    style={{ ...inputStyle, marginTop: 8 }}
-                                  >
-                                    {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                                  </select>
-                                </td>
-                                <td style={cellStyle}>
-                                  <textarea
-                                    aria-label={`Product ${product.id} description`}
-                                    value={editingRecord.description}
-                                    onChange={(e) => changeEditingField("description", e.target.value)}
-                                    required
-                                    rows="3"
-                                    style={inputStyle}
-                                  />
-                                </td>
-                                <td style={cellStyle}>
-                                  <form
-                                    onSubmit={(e) =>
-                                      handleUpdate(
-                                        e,
-                                        "products",
-                                        {
-                                          product: {
-                                            name: editingRecord.name.trim(),
-                                            description: editingRecord.description.trim(),
-                                            category_id: editingRecord.category_id,
-                                          },
-                                        },
-                                        "products"
-                                      )
-                                    }
-                                    style={actionButtonsStyle}
-                                  >
-                                    <Button type="submit" size="small">Save</Button>
-                                    <Button type="button" variant="outline" size="small" onClick={() => setEditingRecord(null)}>Cancel</Button>
-                                  </form>
-                                </td>
-                              </>
-                            ) : (
-                              <>
-                                <td style={cellStyle}><strong>{product.name}</strong></td>
-                                <td style={cellStyle}>{product.description || "—"}</td>
-                                <td style={cellStyle}>
-                                  <div style={actionButtonsStyle}>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="small"
-                                      onClick={() =>
-                                        setEditingRecord({
-                                          type: "product",
-                                          id: product.id,
-                                          name: product.name,
-                                          description: product.description || "",
-                                          category_id: group.category_id,
-                                        })
-                                      }
-                                    >
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="danger"
-                                      size="small"
-                                      onClick={() => handleDelete("products", product.id, "products", "product")}
-                                    >
-                                      Delete
-                                    </Button>
-                                  </div>
-                                </td>
-                              </>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))
-            )}
-
-            {!loading && products.length > 0 && visibleProductGroups.length === 0 && (
-              <EmptyState title="No products in this category yet." />
-            )}
-          </Card>
-
-          <Card as="section" className="lf-admin-panel">
-            <h2>Add Universal Product Base</h2>
-
-            <form
-              onSubmit={(e) =>
-                handleSubmit(
-                  e,
-                  "products",
-                  {
-                    product: {
-                      name: e.currentTarget.name.value.trim(),
-                      description: e.currentTarget.desc.value.trim(),
-                      category_id: e.currentTarget.category_id.value,
-                    },
-                  },
-                  "products"
-                )
-              }
-            >
-              <Input
-                label="Product Name"
-                name="name"
-                required
-                style={inputStyle}
-                placeholder="e.g. iPhone 15"
-              />
-
-              <Input
-                as="textarea"
-                label="Description"
-                name="desc"
-                required
-                style={inputStyle}
-                rows="3"
-                placeholder="Product description..."
-              />
-
-              <Select
-                label="Category"
-                name="category_id"
-                required
-                style={inputStyle}
-                defaultValue=""
-              >
-                  <option value="">Select a Category...</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-              </Select>
-
-              <Button type="submit" size="large">
-                Create Product Base
-              </Button>
-            </form>
-          </Card>
-        </>
+        <ProductsTab
+          products={products}
+          categories={categories}
+          loading={productsApi.loading}
+          selectedProductCategory={selectedProductCategory}
+          setSelectedProductCategory={setSelectedProductCategory}
+          editingRecord={editingRecord}
+          setEditingRecord={setEditingRecord}
+          changeEditingField={changeEditingField}
+          handleSubmit={handleSubmit}
+          handleUpdate={handleUpdate}
+          handleDelete={handleDelete}
+        />
       )}
-
-      {/* GLOBAL DISCOUNTS */}
       {activeTab === "discounts" && (
-        <>
-          <Card as="section" className="lf-admin-panel">
-            <h2>Existing Global Discounts ({discounts.length})</h2>
-
-            {!loading && discounts.length === 0 && (
-              <EmptyState title="No discount codes found yet." />
-            )}
-
-            {discounts.length > 0 && (
-              <div style={tableWrapperStyle}>
-                <table style={tableStyle}>
-                  <thead>
-                    <tr>
-                      <th style={cellStyle}>ID</th>
-                      <th style={cellStyle}>Code</th>
-                      <th style={cellStyle}>Percentage Off</th>
-                      <th style={cellStyle}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {discounts.map((discount) => (
-                      <tr key={discount.id}>
-                        <td style={cellStyle}>{discount.id}</td>
-                      {editingRecord?.type === "discount" && editingRecord.id === discount.id ? (
-                        <>
-                          <td style={cellStyle}>
-                            <input
-                              aria-label={`Discount ${discount.id} code`}
-                              value={editingRecord.code}
-                              onChange={(e) => changeEditingField("code", e.target.value)}
-                              required
-                              style={inputStyle}
-                            />
-                          </td>
-                          <td style={cellStyle}>
-                            <input
-                              aria-label={`Discount ${discount.id} percentage`}
-                              type="number"
-                              min="0.1"
-                              max="100"
-                              step="0.1"
-                              value={editingRecord.percentage}
-                              onChange={(e) => changeEditingField("percentage", e.target.value)}
-                              required
-                              style={inputStyle}
-                            />
-                          </td>
-                          <td style={cellStyle}>
-                            <form
-                              onSubmit={(e) =>
-                                handleUpdate(
-                                  e,
-                                  "discounts",
-                                  {
-                                    discount: {
-                                      code: editingRecord.code.trim(),
-                                      percentage: editingRecord.percentage,
-                                    },
-                                  },
-                                  "discounts"
-                                )
-                              }
-                              style={actionButtonsStyle}
-                            >
-                              <Button type="submit" size="small">Save</Button>
-                              <Button type="button" variant="outline" size="small" onClick={() => setEditingRecord(null)}>Cancel</Button>
-                            </form>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td style={cellStyle}><strong>{discount.code}</strong></td>
-                          <td style={cellStyle}>{discount.percentage}%</td>
-                          <td style={cellStyle}>
-                            <div style={actionButtonsStyle}>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="small"
-                                onClick={() =>
-                                  setEditingRecord({
-                                    type: "discount",
-                                    id: discount.id,
-                                    code: discount.code,
-                                    percentage: discount.percentage,
-                                  })
-                                }
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="danger"
-                                size="small"
-                                onClick={() => handleDelete("discounts", discount.id, "discounts", "discount")}
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
-
-          <Card as="section" className="lf-admin-panel">
-            <h2>Create Global Discount Code</h2>
-
-            <form
-              onSubmit={(e) =>
-                handleSubmit(
-                  e,
-                  "discounts",
-                  {
-                    discount: {
-                      code: e.currentTarget.code.value.trim(),
-                      percentage: e.currentTarget.percentage.value,
-                    },
-                  },
-                  "discounts"
-                )
-              }
-            >
-              <Input
-                label="Promo Code"
-                name="code"
-                required
-                style={inputStyle}
-                placeholder="e.g. BLACKFRIDAY20"
-              />
-
-              <Input
-                label="Percentage Off"
-                name="percentage"
-                type="number"
-                min="0.1"
-                max="100"
-                step="0.1"
-                required
-                style={inputStyle}
-                placeholder="e.g. 20"
-              />
-
-              <Button type="submit" size="large">
-                Create Discount
-              </Button>
-            </form>
-          </Card>
-        </>
+        <DiscountsTab
+          discounts={discounts}
+          loading={discountsApi.loading}
+          editingRecord={editingRecord}
+          setEditingRecord={setEditingRecord}
+          changeEditingField={changeEditingField}
+          handleSubmit={handleSubmit}
+          handleUpdate={handleUpdate}
+          handleDelete={handleDelete}
+        />
       )}
-
       {activeTab === "security" && (
         <SecurityLogsMicrofrontend
           securityLogsApiUrl={securityLogsApiUrl}
@@ -647,68 +203,3 @@ export default function AdminDashboard({
     </PageContainer>
   );
 }
-
-const tabsStyle = {
-  display: "flex",
-  gap: 10,
-  flexWrap: "wrap",
-  margin: "20px 0",
-};
-
-const inputStyle = {
-  padding: 10,
-  fontSize: 16,
-  borderRadius: 5,
-  border: "1px solid #ccc",
-  width: "100%",
-  boxSizing: "border-box",
-};
-
-const listStyle = {
-  listStyle: "none",
-  padding: 0,
-  margin: 0,
-};
-
-const listItemStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 12,
-  padding: "12px 0",
-  borderBottom: "1px solid #eee",
-};
-
-const inlineFormStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  width: "100%",
-};
-
-const actionButtonsStyle = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: 8,
-};
-
-const mutedStyle = {
-  color: "#777",
-  fontSize: 13,
-};
-
-const tableWrapperStyle = {
-  overflowX: "auto",
-};
-
-const tableStyle = {
-  width: "100%",
-  borderCollapse: "collapse",
-  textAlign: "left",
-};
-
-const cellStyle = {
-  padding: 12,
-  borderBottom: "1px solid #ddd",
-  verticalAlign: "top",
-};

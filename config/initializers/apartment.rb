@@ -32,7 +32,7 @@ Apartment.configure do |config|
     LoginAttempt
   ]
 
-  config.tenant_names = -> { Tenant.pluck(:slug) }
+  config.tenant_names = -> { Tenant.pluck(:id).map { |id| "localfind_tenant_#{id}" } }
 
   config.prepend_environment = !Rails.env.production?
   config.db_migrate_tenant_missing_strategy = :create_tenant

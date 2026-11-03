@@ -18,20 +18,37 @@ RSpec.describe Tenant do
 
     it "requires a unique slug" do
       owner = User.create!(email: "tenant-owner@example.test", password: "password123")
-      described_class.create!(user: owner, name: "First store", slug: "test-store")
+      described_class.create!(user: owner, name: "First store", slug: "teststore")
 
-      expect(described_class.new(slug: "test-store")).not_to be_valid
+      expect(described_class.new(slug: "teststore")).not_to be_valid
     end
 
-    it "allows alphanumeric characters and hyphens" do
-      expect(described_class.new(slug: "Store-123", user: User.new)).to be_valid
+    it "allows slugs containing only upper- and lowercase letters" do
+      expect(described_class.new(slug: "StoreName", user: User.new)).to be_valid
     end
 
-    it "rejects slugs containing other characters" do
-      tenant = described_class.new(slug: "bad store")
+    it "rejects numbers, hyphens, and special characters in slugs" do
+      [ "Store123", "store-name", "store_name", "store.name", "store name" ].each do |slug|
+        tenant = described_class.new(slug: slug)
 
-      expect(tenant).not_to be_valid
-      expect(tenant.errors[:slug]).not_to be_empty
+        expect(tenant).not_to be_valid, "expected #{slug.inspect} to be invalid"
+        expect(tenant.errors[:slug]).not_to be_empty
+      end
+    end
+
+    it "uses its persisted id for the database name independently of its slug" do
+      owner = User.create!(email: "stable-tenant@example.test", password: "password123")
+      tenant = described_class.create!(user: owner, name: "Store", slug: "firstslug")
+
+      tenant.update!(slug: "secondslug")
+
+      expect(tenant.apartment_tenant_name).to eq("localfind_tenant_#{tenant.id}")
+      expect(tenant.slug).to eq("secondslug")
+    end
+
+    it "requires persistence before deriving a database name" do
+      expect { described_class.new.apartment_tenant_name }
+        .to raise_error(ArgumentError, /persisted/)
     end
   end
 end
