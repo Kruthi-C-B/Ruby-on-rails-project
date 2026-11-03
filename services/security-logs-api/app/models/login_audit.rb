@@ -1,0 +1,2 @@
+class LoginAudit < ApplicationRecord
+end

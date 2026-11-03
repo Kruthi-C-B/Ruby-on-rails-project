@@ -33,18 +33,19 @@ services:
       - "3000:3000"
     environment:
       AUDIT_API_KEY: ${AUDIT_API_KEY:?Set AUDIT_API_KEY in .env}
-      AUDIT_API_URL: ${AUDIT_API_URL:-http://127.0.0.1:3100}
+      ADMIN_API_URL: ${ADMIN_API_URL:-${AUDIT_API_URL:-http://127.0.0.1:3100}}
+      SECURITY_LOGS_API_URL: ${SECURITY_LOGS_API_URL:-http://127.0.0.1:3101}
     depends_on:
       - db
 
-  audit-api:
+  admin-dashboard-api:
     build:
-      context: ./services/audit-api
+      context: ./services/admin-dashboard-api
       dockerfile: Dockerfile.dev
     command: bash -c "bundle install && rm -f tmp/pids/server.pid && bundle exec rails server -b 0.0.0.0 -p 3100"
     volumes:
-      - ./services/audit-api:/app
-      - audit_api_bundle:/usr/local/bundle
+      - ./services/admin-dashboard-api:/app
+      - admin_dashboard_api_bundle:/usr/local/bundle
     environment:
       AUDIT_API_KEY: ${AUDIT_API_KEY:?Set AUDIT_API_KEY in .env}
       ALLOWED_ORIGINS: http://127.0.0.1:3000,http://localhost:3000
@@ -53,17 +54,46 @@ services:
     depends_on:
       - db
 
-  login-audit:
+  admin-dashboard:
     image: node:22
     working_dir: /mfe
     command: bash -c "npm install && npm start"
     volumes:
-      - ./mfe/login-audit:/mfe
-      - login_audit_node_modules:/mfe/node_modules
+      - ./mfe/admin-dashboard:/mfe
+      - admin_dashboard_node_modules:/mfe/node_modules
     ports:
       - "8500:8500"
 
+  security-logs:
+    image: node:22
+    working_dir: /mfe
+    command: bash -c "npm install && npm start"
+    volumes:
+      - ./mfe/security-logs:/mfe
+      - security_logs_node_modules:/mfe/node_modules
+    ports:
+      - "8501:8501"
+
+  security-logs-api:
+    build:
+      context: ./services/security-logs-api
+      dockerfile: Dockerfile.dev
+    command: bash -c "bundle install && rm -f tmp/pids/server.pid && bundle exec rails server -b 0.0.0.0 -p 3101"
+    volumes:
+      - ./services/security-logs-api:/app
+      - security_logs_api_bundle:/usr/local/bundle
+    environment:
+      AUDIT_API_KEY: ${AUDIT_API_KEY:?Set AUDIT_API_KEY in .env}
+      DB_HOST: db
+      ALLOWED_ORIGINS: http://127.0.0.1:3000,http://localhost:3000
+    ports:
+      - "3101:3101"
+    depends_on:
+      - db
+
 volumes:
   mysql_data:
-  login_audit_node_modules:
-  audit_api_bundle:
+  admin_dashboard_node_modules:
+  security_logs_node_modules:
+  security_logs_api_bundle:
+  admin_dashboard_api_bundle:

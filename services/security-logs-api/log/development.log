@@ -1,0 +1,94 @@
+Started GET "/up" for 172.18.0.1 at 2026-11-02 12:00:53 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (1.4ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC[0m
+Processing by Rails::HealthController#show as */*
+  Rendering html template
+  Rendered html template (Duration: 0.1ms | GC: 0.0ms)
+Completed 200 OK in 105ms (Views: 83.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 2.9ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-02 12:00:54 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as */*
+Filter chain halted as :authenticate! rendered or redirected
+Completed 401 Unauthorized in 3ms (Views: 0.3ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-02 12:01:52 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+Completed 500 Internal Server Error in 110ms (ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 2.9ms)
+
+
+  
+NameError (uninitialized constant ApplicationRecord):
+  
+app/models/login_audit.rb:1:in `<main>'
+app/controllers/api/v1/security/login_audits_controller.rb:8:in `index'
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-02 12:02:49 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+  [1m[36mLoginAudit Load (0.7ms)[0m  [1m[34mSELECT `login_audits`.* FROM `login_audits` ORDER BY `login_audits`.`created_at` DESC LIMIT 100[0m
+Completed 200 OK in 412ms (Views: 10.1ms | ActiveRecord: 14.1ms (1 query, 0 cached) | GC: 1.2ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-02 12:03:10 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as HTML
+Filter chain halted as :require_admin! rendered or redirected
+Completed 403 Forbidden in 2ms (Views: 0.1ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/up" for 172.18.0.1 at 2026-11-02 12:03:26 +0000
+Processing by Rails::HealthController#show as */*
+  Rendering html template
+  Rendered html template (Duration: 0.0ms | GC: 0.0ms)
+Completed 200 OK in 10ms (Views: 8.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/up" for 172.18.0.1 at 2026-11-02 12:09:14 +0000
+Processing by Rails::HealthController#show as */*
+  Rendering html template
+  Rendered html template (Duration: 0.1ms | GC: 0.0ms)
+Completed 200 OK in 12ms (Views: 10.5ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-02 12:09:14 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as */*
+Filter chain halted as :authenticate! rendered or redirected
+Completed 401 Unauthorized in 3ms (Views: 0.4ms | ActiveRecord: 0.0ms (0 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-02 12:10:19 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as JSON
+  [1m[36mLoginAudit Load (27.0ms)[0m  [1m[34mSELECT `login_audits`.* FROM `login_audits` ORDER BY `login_audits`.`created_at` DESC LIMIT 100[0m
+Completed 200 OK in 81ms (Views: 47.6ms | ActiveRecord: 28.6ms (1 query, 0 cached) | GC: 25.8ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-02 12:23:40 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as JSON
+  [1m[36mLoginAudit Load (10.5ms)[0m  [1m[34mSELECT `login_audits`.* FROM `login_audits` ORDER BY `login_audits`.`created_at` DESC LIMIT 100[0m
+Completed 200 OK in 31ms (Views: 13.3ms | ActiveRecord: 11.2ms (1 query, 0 cached) | GC: 1.2ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-02 12:23:47 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as JSON
+  [1m[36mLoginAudit Load (0.5ms)[0m  [1m[34mSELECT `login_audits`.* FROM `login_audits` ORDER BY `login_audits`.`created_at` DESC LIMIT 100[0m
+Completed 200 OK in 7ms (Views: 6.0ms | ActiveRecord: 0.5ms (1 query, 0 cached) | GC: 0.4ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-03 04:54:03 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.5ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC[0m
+Processing by Api::V1::Security::LoginAuditsController#index as JSON
+  [1m[36mLoginAudit Load (0.7ms)[0m  [1m[34mSELECT `login_audits`.* FROM `login_audits` ORDER BY `login_audits`.`created_at` DESC LIMIT 100[0m
+Completed 200 OK in 444ms (Views: 14.2ms | ActiveRecord: 7.7ms (1 query, 0 cached) | GC: 26.9ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-03 04:54:14 +0000
+Processing by Api::V1::Security::LoginAuditsController#index as JSON
+  [1m[36mLoginAudit Load (0.9ms)[0m  [1m[34mSELECT `login_audits`.* FROM `login_audits` ORDER BY `login_audits`.`created_at` DESC LIMIT 100[0m
+Completed 200 OK in 11ms (Views: 8.9ms | ActiveRecord: 0.9ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/api/v1/security/login_audits" for 172.18.0.1 at 2026-11-03 05:00:20 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.6ms)[0m  [1m[34mSELECT `schema_migrations`.`version` FROM `schema_migrations` ORDER BY `schema_migrations`.`version` ASC[0m
+Processing by Api::V1::Security::LoginAuditsController#index as JSON
+  [1m[36mLoginAudit Load (1.6ms)[0m  [1m[34mSELECT `login_audits`.* FROM `login_audits` ORDER BY `login_audits`.`created_at` DESC LIMIT 100[0m
+Completed 200 OK in 631ms (Views: 14.2ms | ActiveRecord: 8.0ms (1 query, 0 cached) | GC: 24.5ms)
+
+
