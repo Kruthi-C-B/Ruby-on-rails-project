@@ -1,44 +1,36 @@
-class Api::V1::Users::CartsController < ApplicationController
+class Api::V1::Users::CartsController < Api::V1::BaseController
   skip_before_action :verify_authenticity_token
 
   def show
-    return render_not_logged_in unless current_user
-
     cart = current_user.carts.find_by(status: "pending") || current_user.carts.create!(status: "pending")
     render json: cart_payload(cart), status: :ok
   end
 
   def apply_discount
-    return render_not_logged_in unless current_user
-
     cart = current_user.carts.find_by(status: "pending")
-    return render json: { error: "No active cart found" }, status: :not_found unless cart
+    return render_error("No active cart found", status: :not_found) unless cart
 
     discount = Discount.find_by(code: params[:code])
-    return render json: { error: "Invalid code" }, status: :unprocessable_entity unless discount
+    return render_error("Invalid code", status: :unprocessable_entity) unless discount
 
     cart.update!(discount: discount)
     render json: cart_payload(cart), status: :ok
   end
 
   def checkout
-    return render_not_logged_in unless current_user
-
     cart = current_user.carts.find_by(status: "pending")
     cart ||= current_user.carts.find_by(status: "ordered")
-    return render json: { error: "Cart is empty" }, status: :unprocessable_entity unless cart
+    return render_error("Cart is empty", status: :unprocessable_entity) unless cart
 
     purchase_reference = CheckoutService.new(cart).call
     render json: { message: "Order successful!", purchase_reference: purchase_reference }, status: :ok
   rescue CheckoutService::CheckoutError => error
-    render json: { error: error.message }, status: :unprocessable_entity
-  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotFound => error
-    render json: { error: error.message }, status: :unprocessable_entity
+    render_error(error.message, status: :unprocessable_entity)
+  rescue ActiveRecord::RecordInvalid => error
+    render_error(error.message, status: :unprocessable_entity)
   end
 
   def orders
-    return render_not_logged_in unless current_user
-
     purchases = Tenant.all.flat_map do |tenant|
       TenantDatabase.switch(tenant) do
         PurchaseHistory.where(user_id: current_user.id).where.not(status: "pending").to_a
@@ -108,9 +100,5 @@ class Api::V1::Users::CartsController < ApplicationController
       total_price: cart.total_price,
       discount_percentage: cart.discount&.percentage
     }
-  end
-
-  def render_not_logged_in
-    render json: { error: "Not logged in" }, status: :unauthorized
   end
 end

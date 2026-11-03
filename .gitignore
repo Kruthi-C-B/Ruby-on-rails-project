@@ -13,6 +13,7 @@ node_modules/
 
 # Ignore all environment files.
 /.env*
+**/.env*
 
 # Ignore all logfiles and tempfiles.
 /log/*
@@ -40,9 +41,18 @@ node_modules/
 
 /public/packs
 /public/packs-test
-/node_modules
-mfe/admin-dashboard/node_modules/
 mfe/admin-dashboard/dist/
 /yarn-error.log
 yarn-debug.log*
 .yarn-integrity
+
+# Nested Rails service artifacts
+coverage/
+services/*/.bundle/
+services/*/tmp/*
+!services/*/tmp/.keep
+services/*/log/*
+!services/*/log/.keep
+services/*/vendor/bundle/
+services/*/config/*.key
+services/*/config/credentials/*.key

@@ -25,7 +25,7 @@ RSpec.describe ListingReference do
 
     it "requires tenant-local listing and product identifiers to be unique" do
       owner = User.create!(email: "reference-owner@example.test", password: "password123")
-      tenant = Tenant.create!(user: owner, name: "Reference store", slug: "reference-store")
+      tenant = Tenant.create!(user: owner, name: "Reference store", slug: "referencestore")
       category = Category.create!(name: "Reference category")
       product = Product.create!(category: category, name: "Reference product")
       described_class.create!(tenant: tenant, product: product, tenant_listing_id: 12, price: 10, stock_quantity: 3)
@@ -60,7 +60,7 @@ RSpec.describe ListingReference do
 
   describe "#product_listing" do
     it "switches to the tenant and finds the tenant-local listing" do
-      tenant = Tenant.new(slug: "listing-product-store")
+      tenant = Tenant.new(slug: "listingproductstore")
       reference = described_class.new(tenant: tenant, tenant_listing_id: 14)
       listing = instance_double(ProductListing)
       allow(TenantDatabase).to receive(:switch).with(tenant).and_yield

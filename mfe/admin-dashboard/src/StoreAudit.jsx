@@ -1,24 +1,13 @@
 
-import React, { useEffect, useState } from "react";
-import { fetchGet } from "./api";
+import React from "react";
 import { Alert, EmptyState, PageHeader, Spinner } from "./ui";
+import useApi from "./useApi";
 
 export default function StoreAudit({ adminApiUrl }) {
-  const [auditData, setAuditData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    fetchGet("/api/v1/admin/audit_trail", adminApiUrl)
-      .then((data) => {
-        setAuditData(data.audit_trail || []);
-      })
-      .catch((err) => {
-        console.error("Failed to load store audit trail:", err);
-        setError("Failed to load audit records. Please try again.");
-      })
-      .finally(() => setLoading(false));
-  }, [adminApiUrl]);
+  const { data, loading, error } = useApi("/api/v1/admin/audit_trail", adminApiUrl, {
+    initialData: { audit_trail: [] },
+  });
+  const auditData = data?.audit_trail || [];
 
   if (loading) {
     return <Spinner label="Loading store audit records…" />;

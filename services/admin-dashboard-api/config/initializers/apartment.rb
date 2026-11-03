@@ -11,6 +11,6 @@ Apartment.configure do |config|
     LoginAudit
     LoginAttempt
   ]
-  config.tenant_names = -> { Tenant.pluck(:slug) }
+  config.tenant_names = -> { Tenant.pluck(:id).map { |id| "localfind_tenant_#{id}" } }
   config.prepend_environment = !Rails.env.production?
 end

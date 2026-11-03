@@ -147,7 +147,7 @@ RSpec.describe "Account authentication workflow", type: :request do
     @tenant = Tenant.create!(
       user: @user,
       name: "Existing Workflow Store",
-      slug: "existing-workflow-#{SecureRandom.hex(4)}"
+      slug: "existingworkflow#{SecureRandom.hex(4).tr('0-9', 'abcdefghij')}"
     )
 
     post "/localFind/login", params: { email: @email, password: "password123" }
@@ -173,7 +173,7 @@ RSpec.describe "Account authentication workflow", type: :request do
     @tenant = Tenant.create!(
       user: @user,
       name: "Guarded Store",
-      slug: "guarded-store-#{SecureRandom.hex(4)}"
+      slug: "guardedstore#{SecureRandom.hex(4).tr('0-9', 'abcdefghij')}"
     )
     get "/localFind"
     expect(response).to have_http_status(:ok)

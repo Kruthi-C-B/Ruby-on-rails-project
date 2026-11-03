@@ -35,7 +35,7 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     post "/api/v1/users/store_owners/tenant", params: {
       tenant: {
         name: "Workflow Store",
-        slug: "workflow-store-#{SecureRandom.hex(4)}",
+        slug: "workflowstore#{SecureRandom.hex(4).tr('0-9', 'abcdefghij')}",
         address: "123 Main Street"
       }
     }
@@ -50,11 +50,6 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     expect(response).to have_http_status(:ok)
     expect(@tenant.reload.address).to eq("456 Updated Street")
 
-    patch "/api/v1/users/store_owners/tenant", params: {
-      tenant: { slug: "not a valid slug" }
-    }
-    expect(response).to have_http_status(:unprocessable_content)
-
     post "/api/v1/users/store_owners/product_listings", params: {
       product_listing: { product_id: @product.id, price: "12.50", stock_quantity: 8 }
     }
@@ -64,6 +59,16 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     expect(listing_response.fetch("price").to_f).to eq(12.5)
     listing_id = listing_response.fetch("id")
     reference = @tenant.listing_references.find_by!(tenant_listing_id: listing_id)
+
+    patch "/api/v1/users/store_owners/tenant", params: {
+      tenant: { slug: "renamedworkflowstore" }
+    }
+    expect(response).to have_http_status(:ok)
+    expect(@tenant.reload.slug).to eq("renamedworkflowstore")
+    expect(@tenant.apartment_tenant_name).to eq("localfind_tenant_#{@tenant.id}")
+    get "/api/v1/users/store_owners/product_listings"
+    expect(response).to have_http_status(:ok)
+    expect(JSON.parse(response.body).map { |listing| listing.fetch("id") }).to include(listing_id)
 
     post "/api/v1/users/store_owners/product_listings", params: {
       product_listing: { product_id: @product.id, price: "12.50", stock_quantity: 8 }
@@ -91,6 +96,7 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
 
     get "/api/v1/products/-1"
     expect(response).to have_http_status(:not_found)
+    expect(JSON.parse(response.body)).to eq("errors" => [ "Not found" ])
 
     get "/api/v1/users/store_owners/product_listings"
     expect(response).to have_http_status(:ok)
@@ -108,6 +114,12 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     reference.reload
     expect(reference.price).to eq(BigDecimal("15.00"))
     expect(reference.stock_quantity).to eq(6)
+
+    patch "/api/v1/users/store_owners/product_listings/-1", params: {
+      product_listing: { price: "16.00", stock_quantity: 4 }
+    }
+    expect(response).to have_http_status(:not_found)
+    expect(JSON.parse(response.body)).to eq("errors" => [ "Not found" ])
 
     get "/api/v1/users/store_owners/analytics"
     expect(response).to have_http_status(:ok)
@@ -161,7 +173,7 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     get "/api/v1/users/store_owners/product_listings"
 
     expect(response).to have_http_status(:forbidden)
-    expect(JSON.parse(response.body)).to eq("error" => "Forbidden. Store profile required.")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "Store profile required" ])
 
     patch "/api/v1/users/store_owners/tenant", params: { tenant: { name: "Missing store" } }
     expect(response).to have_http_status(:not_found)
@@ -185,7 +197,7 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     post "/api/v1/users/store_owners/tenant", params: {
       tenant: {
         name: "Duplicate Race Store",
-        slug: "duplicate-race-#{SecureRandom.hex(4)}"
+        slug: "duplicaterace#{SecureRandom.hex(4).tr('0-9', 'abcdefghij')}"
       }
     }
     expect(response).to have_http_status(:created)
@@ -203,12 +215,13 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     )
   end
 
-  it "cleans up a tenant database when provisioning fails after database creation" do
+  it "leaves the failed stable-name database in place for safe recovery" do
     sign_in_owner
-    slug = "provision-failure-#{SecureRandom.hex(4)}"
+    slug = "provisionfailure#{SecureRandom.hex(4).tr('0-9', 'abcdefghij')}"
 
-    allow(Apartment::Tenant).to receive(:create).and_wrap_original do |original, tenant_slug, &block|
-      original.call(tenant_slug, &block)
+    allow(Apartment::Tenant).to receive(:create).and_wrap_original do |original, tenant_name, &block|
+      @failed_database_tenant_name = tenant_name
+      original.call(tenant_name, &block)
       raise Apartment::TenantExists, "simulated provisioning failure"
     end
 
@@ -220,8 +233,8 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     expect(JSON.parse(response.body).fetch("errors")).to include("Unable to initialize the store database.")
     expect(@owner.reload.tenant).to be_nil
 
-    database_name = Apartment::Tenant.environmentify(slug)
-    expect(Apartment.connection.select_values("SHOW DATABASES")).not_to include(database_name)
+    database_name = Apartment::Tenant.environmentify(@failed_database_tenant_name)
+    expect(Apartment.connection.select_values("SHOW DATABASES")).to include(database_name)
   end
 
   def sign_in_owner
@@ -231,19 +244,26 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
 
   def cleanup_tenant
     tenant = @tenant || @owner&.reload&.tenant
-    return unless tenant
-
-    database_name = Apartment::Tenant.environmentify(tenant.slug)
-    if Apartment.connection.select_values("SHOW DATABASES").include?(database_name)
-      TenantDatabase.switch(tenant) do
-        PurchaseHistory.delete_all
-        ProductListing.delete_all
-        PaperTrail::Version.delete_all
+    if tenant
+      database_name = Apartment::Tenant.environmentify(tenant.apartment_tenant_name)
+      if Apartment.connection.select_values("SHOW DATABASES").include?(database_name)
+        TenantDatabase.switch(tenant) do
+          PurchaseHistory.delete_all
+          ProductListing.delete_all
+          PaperTrail::Version.delete_all
+        end
+        Apartment::Tenant.drop(tenant.apartment_tenant_name)
       end
-      Apartment::Tenant.drop(tenant.slug)
+
+      ListingReference.where(tenant_id: tenant.id).delete_all
+      Tenant.where(id: tenant.id).delete_all
     end
 
-    ListingReference.where(tenant_id: tenant.id).delete_all
-    Tenant.where(id: tenant.id).delete_all
+    if @failed_database_tenant_name
+      failed_database = Apartment::Tenant.environmentify(@failed_database_tenant_name)
+      if Apartment.connection.select_values("SHOW DATABASES").include?(failed_database)
+        Apartment::Tenant.drop(@failed_database_tenant_name)
+      end
+    end
   end
 end

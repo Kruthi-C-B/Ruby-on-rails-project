@@ -24,14 +24,14 @@ RSpec.describe "Shopping cart checkout", type: :request do
     Cart.where(id: @carts.map(&:id)).delete_all
 
     @tenants.each do |tenant|
-      database_name = Apartment::Tenant.environmentify(tenant.slug)
+      database_name = Apartment::Tenant.environmentify(tenant.apartment_tenant_name)
       if Apartment.connection.select_values("SHOW DATABASES").include?(database_name)
         TenantDatabase.switch(tenant) do
           PurchaseHistory.delete_all
           ProductListing.delete_all
           PaperTrail::Version.delete_all
         end
-        Apartment::Tenant.drop(tenant.slug)
+        Apartment::Tenant.drop(tenant.apartment_tenant_name)
       end
       ListingReference.where(tenant_id: tenant.id).delete_all
       Tenant.where(id: tenant.id).delete_all
@@ -109,7 +109,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
     post "/api/v1/users/cart/checkout"
 
     expect(response).to have_http_status(:unauthorized)
-    expect(JSON.parse(response.body)).to eq("error" => "Not logged in")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "Not logged in" ])
   end
 
   it "rejects checkout when the shopper has no cart" do
@@ -118,7 +118,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
     post "/api/v1/users/cart/checkout"
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(JSON.parse(response.body)).to eq("error" => "Cart is empty")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "Cart is empty" ])
   end
 
   it "rejects checkout for an empty pending cart" do
@@ -129,7 +129,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
     post "/api/v1/users/cart/checkout"
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(JSON.parse(response.body)).to eq("error" => "Cart is empty.")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "Cart is empty." ])
     expect(@cart.reload.status).to eq("pending")
   end
 
@@ -144,7 +144,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
     post "/api/v1/users/cart/checkout"
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(JSON.parse(response.body)).to eq("error" => "This cart has already been checked out.")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "This cart has already been checked out." ])
     expect(@cart.reload.status).to eq("ordered")
   end
 
@@ -159,7 +159,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
     post "/api/v1/users/cart/checkout"
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(JSON.parse(response.body)).to eq("error" => "A product is no longer available.")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "A product is no longer available." ])
     expect(@cart.reload.status).to eq("pending")
   end
 
@@ -174,7 +174,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
     post "/api/v1/users/cart/checkout"
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(JSON.parse(response.body)).to eq("error" => "A product does not have enough stock.")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "A product does not have enough stock." ])
     expect(@cart.reload.status).to eq("pending")
   end
 
@@ -197,7 +197,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
     post "/api/v1/users/cart/checkout"
 
     expect(response).to have_http_status(:unprocessable_entity)
-    expect(JSON.parse(response.body)).to eq("error" => "The cart changed while checkout was being retried.")
+    expect(JSON.parse(response.body)).to eq("errors" => [ "The cart changed while checkout was being retried." ])
   end
 
   def create_user(label)
@@ -219,9 +219,9 @@ RSpec.describe "Shopping cart checkout", type: :request do
     tenant = Tenant.create!(
       user: owner,
       name: "#{label} store",
-      slug: "#{label}-#{SecureRandom.hex(5)}"
+      slug: "#{label.gsub(/[^a-zA-Z]/, '')}#{SecureRandom.hex(5).tr('0-9', 'abcdefghij')}"
     )
-    TenantDatabase.provision!(tenant)
+    TenantDatabase.provision_new!(tenant)
     product = Product.create!(
       name: "#{label} product",
       description: "Functional checkout test product",

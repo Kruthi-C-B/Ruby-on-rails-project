@@ -6,7 +6,14 @@ function csrfToken() {
 async function handle(response) {
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = data && data.errors ? data.errors.join(", ") : `Request failed (${response.status})`;
+    const errors = Array.isArray(data?.errors)
+      ? data.errors
+      : data?.error
+        ? [data.error]
+        : [];
+    const message = errors.length
+      ? errors.join(", ")
+      : `Request failed (${response.status})`;
     throw new Error(message);
   }
   return data;

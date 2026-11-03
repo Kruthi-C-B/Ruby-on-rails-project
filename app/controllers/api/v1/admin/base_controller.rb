@@ -1,14 +1,12 @@
-class Api::V1::Admin::BaseController < ApplicationController
+class Api::V1::Admin::BaseController < Api::V1::BaseController
   skip_before_action :verify_authenticity_token
   before_action :require_admin!
 
   private
 
   def require_admin!
-    # Because you are using Rails sessions, we can check current_user directly
-    user = User.find_by(id: session[:user_id])
-    unless user&.is_admin?
-      render json: { error: "Unauthorized. Admin access only." }, status: :unauthorized
-    end
+    return if current_user&.is_admin?
+
+    render_error("Admin access only", status: :forbidden)
   end
 end

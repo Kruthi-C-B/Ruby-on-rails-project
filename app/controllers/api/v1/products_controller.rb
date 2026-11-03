@@ -1,6 +1,8 @@
 module Api
   module V1
     class ProductsController < BaseController
+      skip_before_action :require_api_login!
+
       def index
         products = Product.joins(:listing_references).includes(:category).distinct
         products = products.where("products.name LIKE ?", "%#{params[:query]}%") if params[:query].present?
