@@ -1,2 +1,0 @@
-class LoginAudit < ApplicationRecord
-end

@@ -4,7 +4,7 @@ import CategoriesTab from "./CategoriesTab";
 import DiscountsTab from "./DiscountsTab";
 import ProductsTab from "./ProductsTab";
 import StoreAudit from "./StoreAudit";
-import SecurityLogsMicrofrontend from "./SecurityLogsMicrofrontend";
+import Parcel from "single-spa-react/parcel";
 import useApi from "./useApi";
 import { Alert, Button, PageContainer, PageHeader, Spinner } from "./ui";
 import "./admin.css";
@@ -41,6 +41,7 @@ export default function AdminDashboard({
   adminApiUrl,
   securityLogsMfeUrl,
   securityLogsApiUrl,
+  mountParcel,
 }) {
   const [activeTab, setActiveTab] = useState("categories");
   const [message, setMessage] = useState(null);
@@ -194,10 +195,18 @@ export default function AdminDashboard({
         />
       )}
       {activeTab === "security" && (
-        <SecurityLogsMicrofrontend
-          securityLogsApiUrl={securityLogsApiUrl}
-          mfeUrl={securityLogsMfeUrl}
-        />
+        <section className="lf-admin-panel" aria-label="Security logs microfrontend">
+          <Parcel
+            config={() => {
+              if (!window.System?.import) {
+                throw new Error("SystemJS is unavailable; the security logs MFE cannot be loaded.");
+              }
+              return window.System.import(securityLogsMfeUrl);
+            }}
+            mountParcel={mountParcel}
+            securityLogsApiUrl={securityLogsApiUrl}
+          />
+        </section>
       )}
       {activeTab === "audit" && <StoreAudit adminApiUrl={adminApiUrl} />}
     </PageContainer>

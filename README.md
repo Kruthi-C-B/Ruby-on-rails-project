@@ -78,8 +78,68 @@ The platform admin dashboard is a standalone single-spa microfrontend under
 microfrontend under `mfe/security-logs`, loaded and mounted by the dashboard
 when that tab is selected. Other dashboard tabs call the `admin-dashboard-api`
 service; the child MFE calls its own `security-logs-api` service. Rails owns
-browser login and session validation and issues short-lived JWTs that each
-backend validates, including the admin role.
+browser login and session validation and issues short-lived JWTs for a specific
+backend. The admin API and Security Logs API use different signing secrets and
+require their own audience claim, so a token for one backend cannot be used at
+the other. The browser caches each token in memory and requests a replacement
+before its five-minute expiry.
+
+Set two independent, high-entropy values in the ignored `.env` file:
+
+```dotenv
+ADMIN_DASHBOARD_JWT_SECRET=<unique secret for admin-dashboard-api>
+SECURITY_LOGS_JWT_SECRET=<different unique secret for security-logs-api>
+```
+
+Generate each value independently (for example, with
+`ruby -rsecurerandom -e "puts SecureRandom.hex(64)"`). The old shared
+`AUDIT_API_KEY` is no longer used. Update the main app and matching backend
+environment together before restarting the services.
+
+## Shared Rails rules and database boundaries
+
+The three Rails applications use the in-repository `localfind_shared` gem for
+service-token validation/issuance, the administrator-role rule, catalog model
+validations/associations, and stable tenant database naming. The main app
+issues audience-specific JWTs; both APIs verify the signature, audience,
+expiration, and required claims with the shared verifier. A `platform_admin`
+user is an administrator even when `is_admin` is false.
+
+The admin API does not connect to tenant databases. Its tenant-history and
+product-reference queries go through admin-only internal endpoints in the
+main app, which owns and validates tenant database access. The security-logs
+API has read-only access to the selected `login_audits` columns.
+
+Database permissions are provisioned separately from normal service startup.
+Set independent passwords in the ignored `.env` file:
+
+```dotenv
+LOCALFIND_MAIN_DB_PASSWORD=<unique database account password>
+ADMIN_DASHBOARD_DB_PASSWORD=<different database account password>
+SECURITY_LOGS_DB_PASSWORD=<another unique database account password>
+```
+
+Then apply the idempotent account/grant task using the MySQL administrator
+account configured for Compose:
+
+```sh
+docker compose --profile db-admin run --rm db-access-setup
+```
+
+Restart the Rails services after provisioning so existing connections are
+reopened under the restricted accounts. The grant policy is:
+
+| Service | Shared database privileges |
+| --- | --- |
+| Main Rails app | Read/write `users`, `tenants`, `carts`, `cart_items`, `listing_references`, `login_audits`, and `login_attempts`; read catalog tables; read/insert PaperTrail rows. It also has `CREATE` for Apartment tenant provisioning and full privileges only within its tenant-database name pattern. |
+| Admin dashboard API | Read/write `categories`, `products`, and `discounts`; insert catalog PaperTrail versions; read only selected columns from users, tenants, carts, and listing references. It has no tenant-database privileges. |
+| Security Logs API | Read only selected columns from `login_audits`; no user, tenant, catalog, or tenant-database access. |
+
+The isolated test database grants the main app additional catalog and legacy
+listing/history writes so the Rails specs can build their own test records.
+Production schema migrations must use a separate DBA/migration connection; do
+not broaden runtime service grants for deployments. No data migration is
+needed for these permissions or shared-rule changes.
 
 Start the Rails app, API service, and dashboard MFE with Docker Compose:
 
@@ -102,6 +162,7 @@ For a production asset, run `npm run build` in `mfe/admin-dashboard` and copy
 `mfe/security-logs` and copy
 `mfe/security-logs/dist/localfind-security-logs.js` to
 `public/mfe/localfind-security-logs.js`.
+Generated `dist/` bundles are ignored by Git.
 
 ## Reusable React UI components
 

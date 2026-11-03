@@ -11,6 +11,7 @@ WORKDIR /app
 
 # Install Ruby gems
 COPY Gemfile Gemfile.lock ./
+COPY shared/localfind_shared ./shared/localfind_shared
 RUN bundle install
 
 # Copy application code

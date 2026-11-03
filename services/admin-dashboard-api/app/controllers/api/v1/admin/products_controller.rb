@@ -47,6 +47,10 @@ module Api
           render json: { message: "Product deleted." }
         rescue ActiveRecord::RecordNotFound
           render json: { errors: [ "Product not found." ] }, status: :not_found
+        rescue MainAppInternalClient::Error => error
+          Rails.logger.error("Tenant product data request failed: #{error.message}")
+          render json: { errors: [ "Tenant product data is temporarily unavailable" ] },
+                 status: :service_unavailable
         rescue ActiveRecord::RecordNotDestroyed, ActiveRecord::InvalidForeignKey => error
           render json: { errors: [ error.message ] }, status: :unprocessable_entity
         end
@@ -54,12 +58,11 @@ module Api
         private
 
         def tenant_product_records_exist?(product_id)
-          Tenant.all.any? do |tenant|
-            Apartment::Tenant.switch(tenant.database_tenant_name) do
-              ProductListing.exists?(product_id: product_id) ||
-                PurchaseHistory.exists?(product_id: product_id)
-            end
-          end
+          result = MainAppInternalClient.new(authorization: request.headers["Authorization"]).get(
+            "/api/v1/internal/admin/product_references",
+            params: { product_id: product_id }
+          )
+          result.fetch("in_use")
         end
 
         def product_params

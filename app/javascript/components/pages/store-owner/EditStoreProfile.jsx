@@ -57,6 +57,7 @@ export default function EditStoreProfile() {
 
           <Input
             label="Store URL Slug"
+            hint="Use letters only (A–Z). Numbers, spaces, hyphens, and special characters aren't allowed."
             type="text"
             required
             value={formData.slug}
