@@ -1,60 +1,28 @@
-# SQLite. Versions 3.8.0 and up are supported.
-#   gem install sqlite3
-#
-#   Ensure the SQLite 3 gem is defined in your Gemfile
-#   gem "sqlite3"
-#
-# default: &default
-#   adapter: sqlite3
-#   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-#   timeout: 5000
+<%
+  is_migrating = ENV["DB_MIGRATION_USERNAME"].present? ||
+                 caller.any? { |c| c.include?("rake") || c.include?("migrate") || c.include?("schema") } ||
+                 $PROGRAM_NAME.to_s.include?("rake") ||
+                 ARGV.any? { |arg| arg.to_s =~ /^(db:|tenant_databases:)/ }
 
-# development:
-#   <<: *default
-#   database: storage/development.sqlite3
+  db_user = if is_migrating
+    ENV["DB_MIGRATION_USERNAME"] || ENV["DB_PROVISIONER_USERNAME"] || "root"
+  else
+    ENV.fetch("LOCALFIND_MAIN_DB_USERNAME", "localfind_main")
+  end
 
-# Warning: The database defined as "test" will be erased and
-# re-generated from your development database when you run "rake".
-# Do not set this db to the same as development or production.
-# test:
-#   <<: *default
-#   database: storage/test.sqlite3
-
-# Store production database in the storage/ directory, which by default
-# is mounted as a persistent Docker volume in config/deploy.yml.
-# production:
-#   primary:
-#     <<: *default
-#     database: storage/production.sqlite3
-#   cache:
-#     <<: *default
-#     database: storage/production_cache.sqlite3
-#     migrations_paths: db/cache_migrate
-#   queue:
-#     <<: *default
-#     database: storage/production_queue.sqlite3
-#     migrations_paths: db/queue_migrate
-#   cable:
-#     <<: *default
-#     database: storage/production_cable.sqlite3
-#     migrations_paths: db/cable_migrate
-
-
-# default: &default
-#   adapter: mysql2
-#   encoding: utf8mb4
-#   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-#   username: root
-#   password: password
-#   host: 127.0.0.1
-#   port: 3306
+  db_pass = if is_migrating
+    ENV["DB_MIGRATION_PASSWORD"] || ENV["DB_PROVISIONER_PASSWORD"] || ENV["MYSQL_ROOT_PASSWORD"] || "password"
+  else
+    ENV.fetch("LOCALFIND_MAIN_DB_PASSWORD")
+  end
+%>
 
 default: &default
   adapter: mysql2
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: <%= ENV.fetch("LOCALFIND_MAIN_DB_USERNAME", "localfind_main") %>
-  password: <%= ENV.fetch("LOCALFIND_MAIN_DB_PASSWORD") %>
+  username: <%= db_user %>
+  password: <%= db_pass %>
   host: <%= ENV.fetch("DB_HOST", "db") %>
 
 development:

@@ -1,3 +1,3 @@
 class Category < ApplicationRecord
-  include LocalFindPramata::CatalogCategoryRules
+  include LocalFindShared::CatalogCategoryRules
 end

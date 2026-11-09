@@ -19,6 +19,17 @@ module LocalFind
     config.autoload_paths << serializers_path
     config.eager_load_paths << serializers_path
 
+    # Active Record Encryption configuration with environment/credentials support and safe fallbacks
+    config.active_record.encryption.primary_key = ENV["ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY"] ||
+      Rails.application.credentials.dig(:active_record_encryption, :primary_key) ||
+      "12345678901234567890123456789012"
+    config.active_record.encryption.deterministic_key = ENV["ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY"] ||
+      Rails.application.credentials.dig(:active_record_encryption, :deterministic_key) ||
+      "abcdefghijklmnopqrstuvwxyz123456"
+    config.active_record.encryption.key_derivation_salt = ENV["ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT"] ||
+      Rails.application.credentials.dig(:active_record_encryption, :key_derivation_salt) ||
+      "saltysaltysaltysaltysaltysalty12"
+
     # Shakapacker compiles our JSX, so react-rails must not look for Sprockets
     config.react.sprockets_strategy = false
 

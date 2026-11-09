@@ -9,7 +9,6 @@ class CheckoutService
     @cart.with_lock do
       items = @cart.cart_items.includes(listing_reference: :tenant).to_a
       raise CheckoutError, "Cart is empty." if items.empty?
-      raise CheckoutError, "This cart has already been checked out." unless @cart.status == "pending"
 
       @cart.update!(purchase_reference: SecureRandom.uuid) if @cart.purchase_reference.blank?
       purchase_reference = @cart.purchase_reference
@@ -17,6 +16,15 @@ class CheckoutService
       amounts_by_item = DiscountAllocator.call(items, @cart.discount&.percentage || 0)
 
       validate_stock!(items_by_tenant, purchase_reference, amounts_by_item)
+      if @cart.status != "pending"
+        raise CheckoutError, "This cart has already been checked out."
+      end
+
+      if purchases_exist?(items_by_tenant, purchase_reference)
+        @cart.update!(status: "ordered")
+        return purchase_reference
+      end
+
       create_pending_purchases!(items_by_tenant, purchase_reference, amounts_by_item)
       complete_purchases!(items_by_tenant, purchase_reference)
       @cart.update!(status: "ordered")
@@ -26,6 +34,20 @@ class CheckoutService
   end
 
   private
+
+  def purchases_exist?(items_by_tenant, purchase_reference)
+    items_by_tenant.each_value.all? do |items|
+      tenant = items.first.listing_reference.tenant
+      TenantDatabase.switch(tenant) do
+        items.all? do |item|
+          PurchaseHistory.exists?(
+            purchase_reference: purchase_reference,
+            product_listing_id: item.listing_reference.tenant_listing_id
+          )
+        end
+      end
+    end
+  end
 
   def validate_stock!(items_by_tenant, purchase_reference, amounts_by_item)
     items_by_tenant.each_value do |items|
@@ -40,6 +62,7 @@ class CheckoutService
           if existing
             amounts = amounts_by_item.fetch(item.id)
             unless existing.quantity == item.quantity &&
+                   existing.unit_price == item.unit_price &&
                    existing.discount_amount == amounts[:discount_amount] &&
                    existing.total_price == amounts[:total_price]
               raise CheckoutError, "The cart changed while checkout was being retried."

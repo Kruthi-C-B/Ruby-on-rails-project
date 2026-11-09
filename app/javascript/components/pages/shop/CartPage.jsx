@@ -36,7 +36,7 @@ export default function CartPage() {
   useEffect(() => {
     loadCart();
     loadDiscounts();
-    loadOrders();
+    // loadOrders();
   }, []);
 
   const loadCart = async () => {
@@ -129,6 +129,16 @@ export default function CartPage() {
     }
   };
 
+  const handlePastOrdersClick = async () => {
+  const shouldShowOrders = !showPastOrders;
+
+  setShowPastOrders(shouldShowOrders);
+
+  if (shouldShowOrders) {
+    await loadOrders();
+  }
+};
+
   if (loading) {
     return (
       <PageContainer size="narrow">
@@ -144,7 +154,7 @@ export default function CartPage() {
       <div className="lf-cart-history-toggle">
         <Button
           variant="outline"
-          onClick={() => setShowPastOrders((prev) => !prev)}
+          onClick={handlePastOrdersClick}
         >
           {showPastOrders ? "← Back to Cart" : "Past Orders"}
         </Button>

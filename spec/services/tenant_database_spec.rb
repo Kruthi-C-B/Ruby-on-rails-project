@@ -112,7 +112,6 @@ RSpec.describe TenantDatabase do
       expect(described_class.provision!(tenant)).to eq(:created)
       expect(described_class).to have_received(:create_ownership_marker!).with(42)
       expect(described_class).not_to have_received(:copy_legacy_data!)
-      expect(tenant).not_to have_received(:update_columns)
     end
 
     it "reuses a database only after owner verification and completed migration" do
@@ -149,7 +148,7 @@ RSpec.describe TenantDatabase do
     end
 
     it "marks a newly created database complete only through new-tenant provisioning" do
-      described_class.provision_new!(tenant)
+      described_class.provision!(tenant)
 
       expect(tenant).to have_received(:update_columns).with(
         database_migrated_at: anything,
@@ -164,7 +163,7 @@ RSpec.describe TenantDatabase do
       allow(described_class).to receive(:verify_ownership!).and_return(true)
       allow(described_class).to receive(:copy_legacy_data!)
 
-      expect(described_class.provision_new!(tenant)).to eq(:existing)
+      expect(described_class.provision!(tenant)).to eq(:existing)
       expect(described_class).not_to have_received(:copy_legacy_data!)
     end
   end
@@ -360,6 +359,60 @@ RSpec.describe TenantDatabase do
 
       expect(connection).to have_received(:drop_table).with("users")
       expect(connection).to have_received(:drop_table).with("carts")
+    end
+  end
+
+  describe "credential lifecycle and provisioning" do
+    let(:tenant) do
+      instance_double(
+        Tenant,
+        id: 7,
+        db_username: "tenant_7_app",
+        db_password: "secretpassword1234567890"
+      )
+    end
+    let(:connection) { instance_double(ActiveRecord::ConnectionAdapters::AbstractAdapter) }
+
+    before do
+      allow(Apartment).to receive(:connection).and_return(connection)
+      allow(connection).to receive(:raw_connection).and_return(nil)
+      allow(connection).to receive(:execute)
+    end
+
+    it "creates MySQL user and grants scoped DML privileges on the tenant database" do
+      described_class.provision_mysql_account!(tenant, "development_localfind_tenant_7", connection)
+
+      expect(connection).to have_received(:execute).with(
+        "CREATE USER IF NOT EXISTS 'tenant_7_app'@'%' IDENTIFIED BY 'secretpassword1234567890'"
+      )
+      expect(connection).to have_received(:execute).with(
+        "ALTER USER 'tenant_7_app'@'%' IDENTIFIED BY 'secretpassword1234567890'"
+      )
+      expect(connection).to have_received(:execute).with(
+        "REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'tenant_7_app'@'%'"
+      )
+      expect(connection).to have_received(:execute).with(
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON `development_localfind_tenant_7`.* TO 'tenant_7_app'@'%'"
+      )
+    end
+
+    it "drops the MySQL user during deprovisioning" do
+      described_class.deprovision_mysql_account!(tenant, connection)
+
+      expect(connection).to have_received(:execute).with("DROP USER IF EXISTS 'tenant_7_app'@'%'")
+    end
+
+    it "rotates MySQL user password and updates the tenant record" do
+      allow(tenant).to receive(:with_lock) { |&block| block.call }
+      allow(tenant).to receive(:reload).and_return(tenant)
+      allow(tenant).to receive(:rotate_db_password!)
+
+      described_class.rotate_credentials!(tenant, "newrotatedpassword9999", connection)
+
+      expect(connection).to have_received(:execute).with(
+        "ALTER USER 'tenant_7_app'@'%' IDENTIFIED BY 'newrotatedpassword9999'"
+      )
+      expect(tenant).to have_received(:rotate_db_password!).with("newrotatedpassword9999")
     end
   end
 end

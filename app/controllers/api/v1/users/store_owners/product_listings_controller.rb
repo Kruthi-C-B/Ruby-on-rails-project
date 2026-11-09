@@ -3,7 +3,7 @@ module Api
     module Users
       module StoreOwners
         class ProductListingsController < Api::V1::BaseController
-          skip_before_action :verify_authenticity_token
+          # skip_before_action :verify_authenticity_token
           before_action :require_store_owner
           rescue_from ActiveRecord::RecordNotUnique do
             render_error(

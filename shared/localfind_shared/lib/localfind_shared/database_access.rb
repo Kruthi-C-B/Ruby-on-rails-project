@@ -1,9 +1,9 @@
-module LocalFindPramata
+module LocalFindShared
   module DatabaseAccess
     MAIN_WRITE_TABLES = %w[
       users tenants carts cart_items listing_references login_audits login_attempts
     ].freeze
-    MAIN_READ_TABLES = %w[categories products discounts].freeze
+    MAIN_READ_TABLES = %w[categories products discounts product_listings purchase_histories].freeze
     MAIN_AUDIT_TABLE = "versions"
     MAIN_TEST_ONLY_TABLES = %w[product_listings purchase_histories].freeze
     ADMIN_WRITE_TABLES = %w[categories products discounts].freeze
@@ -19,17 +19,20 @@ module LocalFindPramata
     }.freeze
     METADATA_TABLES = %w[schema_migrations ar_internal_metadata].freeze
     DATA_WRITE_PRIVILEGES = %w[SELECT INSERT UPDATE DELETE].freeze
+    TENANT_APP_PRIVILEGES = %w[SELECT INSERT UPDATE DELETE].freeze
+    TENANT_MIGRATION_PRIVILEGES = %w[SELECT INSERT UPDATE DELETE CREATE ALTER INDEX DROP REFERENCES].freeze
 
     def self.statements(service:, database:, account:, host: "%", tenant_database_pattern: nil,
-                        allow_test_catalog_writes: false)
-      user = quote_account(account)
+                        allow_test_catalog_writes: false, isolated_app: false)
+      user = quote_account(account, host)
       grants = case service
       when :main
-        MAIN_WRITE_TABLES.map { |table| "#{DATA_WRITE_PRIVILEGES.join(', ')} ON #{quote_table(database, table)} TO #{user}" } +
+        table_grants = MAIN_WRITE_TABLES.map { |table| "#{DATA_WRITE_PRIVILEGES.join(', ')} ON #{quote_table(database, table)} TO #{user}" } +
           [ "SELECT, INSERT ON #{quote_table(database, MAIN_AUDIT_TABLE)} TO #{user}" ] +
           main_read_grants(database, user, allow_test_catalog_writes) +
-          main_test_table_grants(database, user, allow_test_catalog_writes) +
-          [ "CREATE ON *.* TO #{user}" ]
+          main_test_table_grants(database, user, allow_test_catalog_writes)
+        table_grants << "CREATE ON *.* TO #{user}" unless isolated_app
+        table_grants
       when :admin_dashboard
         ADMIN_WRITE_TABLES.map { |table| "#{DATA_WRITE_PRIVILEGES.join(', ')} ON #{quote_table(database, table)} TO #{user}" } +
           ADMIN_INSERT_TABLES.map { |table| "INSERT ON #{quote_table(database, table)} TO #{user}" } +
@@ -41,10 +44,25 @@ module LocalFindPramata
       end
 
       grants.concat(METADATA_TABLES.map { |table| "SELECT ON #{quote_table(database, table)} TO #{user}" })
-      if service == :main && tenant_database_pattern
+      if service == :main && tenant_database_pattern && !isolated_app
         grants << "ALL PRIVILEGES ON #{quote_identifier(tenant_database_pattern)}.* TO #{user}"
       end
       grants.map { |grant| "GRANT #{grant}" }
+    end
+
+    def self.tenant_application_statements(database:, account:, host: "%")
+      user = quote_account(account, host)
+      [ "GRANT #{TENANT_APP_PRIVILEGES.join(', ')} ON #{quote_identifier(database)}.* TO #{user}" ]
+    end
+
+    def self.tenant_migration_statements(database:, account:, host: "%")
+      user = quote_account(account, host)
+      [ "GRANT #{TENANT_MIGRATION_PRIVILEGES.join(', ')} ON #{quote_identifier(database)}.* TO #{user}" ]
+    end
+
+    def self.revoke_tenant_pattern_statements(account:, tenant_database_pattern:, host: "%")
+      user = quote_account(account, host)
+      [ "REVOKE ALL PRIVILEGES ON #{quote_identifier(tenant_database_pattern)}.* FROM #{user}" ]
     end
 
     def self.main_read_grants(database, user, allow_test_catalog_writes)
@@ -71,7 +89,6 @@ module LocalFindPramata
     def self.quote_identifier(value)
       "`#{value.to_s.gsub("`", "``")}`"
     end
-    private_class_method :quote_identifier
 
     def self.quote_table(database, table)
       "#{quote_identifier(database)}.#{quote_identifier(table)}"

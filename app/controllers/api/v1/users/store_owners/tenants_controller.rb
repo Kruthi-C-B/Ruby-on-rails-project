@@ -4,13 +4,13 @@ module Api
     module Users
       module StoreOwners
         class TenantsController < Api::V1::BaseController
-          skip_before_action :verify_authenticity_token
+          # skip_before_action :verify_authenticity_token
 
           def create
             tenant = current_user.build_tenant(create_tenant_params)
 
             if tenant.save
-              TenantDatabase.provision_new!(tenant)
+              TenantDatabase.provision!(tenant)
               render json: {
                 message: "Store profile created successfully!",
                 tenant: tenant
@@ -20,11 +20,23 @@ module Api
                 errors: tenant.errors.full_messages
               }, status: :unprocessable_entity
             end
-          rescue Apartment::ApartmentError, ActiveRecord::ActiveRecordError, TenantDatabase::Error => error
-            tenant&.destroy
-            Rails.logger.error("Tenant database provisioning failed: #{error.message}")
-            render_error("Unable to initialize the store database.", status: :unprocessable_entity)
-          end
+          rescue Apartment::ApartmentError,
+       ActiveRecord::ActiveRecordError,
+       TenantDatabase::Error => error
+
+        Rails.logger.error("========== TENANT PROVISIONING FAILED ==========")
+        Rails.logger.error("Error class: #{error.class}")
+        Rails.logger.error("Error message: #{error.message}")
+        Rails.logger.error(error.full_message)
+        Rails.logger.error("================================================")
+
+        tenant&.destroy
+
+        render_error(
+          "Unable to initialize the store database: #{error.class}: #{error.message}",
+          status: :unprocessable_entity
+        )
+    end
 
           def update
             tenant = current_user.tenant

@@ -1,3 +1,3 @@
 class Discount < ApplicationRecord
-  include LocalFindPramata::CatalogDiscountRules
+  include LocalFindShared::CatalogDiscountRules
 end

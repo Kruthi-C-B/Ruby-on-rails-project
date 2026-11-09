@@ -1,11 +1,14 @@
+
 class SessionsController < ApplicationController
-  def new; end
+  def new
+  end
 
   def create
     user = User.find_by(email: params[:email])
 
     if user && user.authenticate(params[:password])
-      # --- AUDIT: SUCCESSFUL LOGIN ---
+
+      # Audit: successful login
       LoginAudit.create!(
         user: user,
         email: params[:email],
@@ -13,27 +16,34 @@ class SessionsController < ApplicationController
         status: "success"
       )
 
+      # SECURITY: Start a fresh session
+      reset_session
       session[:user_id] = user.id
 
-      # 1. Platform Owner (Super Admin) Logic
+      # 1. Platform Owner (Super Admin)
       if user.is_admin?
-        redirect_to "/localFind/admin/dashboard", notice: "Welcome to the Platform Admin Dashboard!"
+        redirect_to "/localFind/admin/dashboard",
+                    notice: "Welcome to the Platform Admin Dashboard!"
 
-      # 2. Existing Store Owner (Tenant) Logic
+      # 2. Existing Store Owner
       elsif params[:admin_login] == "true" || user.tenant.present?
         if user.tenant.present?
-          redirect_to local_find_path, notice: "Welcome back to your store dashboard!"
+          redirect_to local_find_path,
+                      notice: "Welcome back to your store dashboard!"
         else
-          redirect_to "/localFind/tenant", notice: "Please set up your store profile."
+          redirect_to "/localFind/tenant",
+                      notice: "Please set up your store profile."
         end
 
-      # 3. Regular Shopper Logic
+      # 3. Regular Shopper
       else
-        redirect_to local_find_path, notice: "Logged in successfully!"
+        redirect_to local_find_path,
+                    notice: "Logged in successfully!"
       end
 
     elsif user
-      # --- AUDIT: FAILED LOGIN (Wrong Password) ---
+
+      # Audit: wrong password
       LoginAudit.create!(
         user: user,
         email: params[:email],
@@ -46,23 +56,28 @@ class SessionsController < ApplicationController
       render :new, status: :unprocessable_entity
 
     else
-      # --- AUDIT: FAILED LOGIN (User Not Found) ---
+
+      # Audit: user not found
       LoginAttempt.create!(
-    email: params[:email],
-    ip_address: request.remote_ip,
-    user_agent: request.user_agent,
-    status: "failure",
-    failure_reason: "user_not_found",
-    login_timestamp: Time.current
-  )
+        email: params[:email],
+        ip_address: request.remote_ip,
+        user_agent: request.user_agent,
+        status: "failure",
+        failure_reason: "user_not_found",
+        login_timestamp: Time.current
+      )
 
       flash.now[:alert] = "Invalid email or password."
-  render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_entity
+
     end
   end
 
   def destroy
-    session[:user_id] = nil
-    redirect_to local_find_path, notice: "Logged out successfully!"
+    # SECURITY: Clear the entire session
+    reset_session
+
+    redirect_to local_find_path,
+                notice: "Logged out successfully!"
   end
 end

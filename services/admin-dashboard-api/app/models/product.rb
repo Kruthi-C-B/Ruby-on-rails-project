@@ -1,4 +1,4 @@
 class Product < ApplicationRecord
   has_paper_trail
-  include LocalFindPramata::CatalogProductRules
+  include LocalFindShared::CatalogProductRules
 end

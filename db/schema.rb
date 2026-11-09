@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_03_120003) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_120000) do
   create_table "cart_items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "cart_id", null: false
     t.integer "quantity"
@@ -132,6 +132,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_03_120003) do
     t.datetime "updated_at", null: false
     t.datetime "database_migrated_at"
     t.string "database_migration_source"
+    t.string "db_username"
+    t.string "db_password"
     t.index ["slug"], name: "index_tenants_on_slug", unique: true
     t.index ["user_id"], name: "index_tenants_on_user_id", unique: true
   end

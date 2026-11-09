@@ -29,9 +29,11 @@ client = Mysql2::Client.new(
   password: ENV.fetch("DB_PROVISIONER_PASSWORD")
 )
 
+isolate_tenants = ENV["ISOLATE_TENANT_CREDENTIALS"] == "1" || environment == "production"
+
 begin
   accounts.each do |service, (username, password)|
-    user_sql = LocalFindPramata::DatabaseAccess.quote_account(username)
+    user_sql = LocalFindShared::DatabaseAccess.quote_account(username)
     escaped_password = client.escape(password)
     client.query("CREATE USER IF NOT EXISTS #{user_sql} IDENTIFIED BY '#{escaped_password}'")
     client.query("ALTER USER #{user_sql} IDENTIFIED BY '#{escaped_password}'")
@@ -40,12 +42,13 @@ begin
     databases.each do |database|
       tenant_prefix = database == "local_find_test" ? "test_" : "development_"
       tenant_pattern = "#{tenant_prefix}localfind\\_tenant\\_%"
-      LocalFindPramata::DatabaseAccess.statements(
+      LocalFindShared::DatabaseAccess.statements(
         service: service,
         database: database,
         account: username,
         tenant_database_pattern: service == :main ? tenant_pattern : nil,
-        allow_test_catalog_writes: service == :main && database == "local_find_test"
+        allow_test_catalog_writes: service == :main && database == "local_find_test",
+        isolated_app: isolate_tenants
       ).each { |grant| client.query(grant) }
       puts "Provisioned #{service} database account for #{database}"
     end

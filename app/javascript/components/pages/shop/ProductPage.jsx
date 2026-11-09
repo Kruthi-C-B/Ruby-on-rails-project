@@ -110,9 +110,9 @@ export default function ProductPage() {
                   <strong>{rec.name}</strong> <br/>
                   <small style={{ color: "#666" }}>Sold by: {rec.storeName}</small>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                {/* <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                   <span>${Number(rec.price).toFixed(2)}</span>
-                  {/* Hide recommendation cart buttons from admins too */}
+                  
                   {!isAdmin && (
                     <Button
                       variant="secondary"
@@ -122,7 +122,7 @@ export default function ProductPage() {
                       Add to Cart
                     </Button>
                   )}
-                </div>
+                </div> */}
               </li>
             ))}
           </ul>
@@ -131,3 +131,5 @@ export default function ProductPage() {
     </PageContainer>
   );
 }
+
+

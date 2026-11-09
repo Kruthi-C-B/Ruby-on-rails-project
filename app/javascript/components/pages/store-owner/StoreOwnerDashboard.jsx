@@ -21,26 +21,66 @@ export default function StoreOwnerDashboard() {
   const [formError, setFormError] = useState(null);
 
   // 1. Initial Data Load
-  useEffect(() => {
-    Promise.all([
-      fetchGet("/api/v1/me"),
-      fetchGet("/api/v1/users/store_owners/product_listings"),
-      fetchGet("/api/v1/categories"),
+  // useEffect(() => {
+  //   Promise.all([
+  //     fetchGet("/api/v1/me"),
+  //     fetchGet("/api/v1/users/store_owners/product_listings"),
+  //     fetchGet("/api/v1/categories"),
       
-      fetchGet("/api/v1/users/store_owners/analytics")
-    ])
-      .then(([userData, inventory, fetchedCategories,audit]) => {
-        setTenant(userData.tenant);
-        setAuditData(audit);
-        setListings(inventory);
-        setCategories(fetchedCategories);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Failed to load dashboard data", err);
-        setLoading(false);
-      });
-  }, []);
+  //     fetchGet("/api/v1/users/store_owners/analytics")
+  //   ])
+  //     .then(([userData, inventory, fetchedCategories,audit]) => {
+  //       setTenant(userData.tenant);
+  //       setAuditData(audit);
+  //       setListings(inventory);
+  //       setCategories(fetchedCategories);
+  //       setLoading(false);
+  //     })
+  //     .catch((err) => {
+  //       console.error("Failed to load dashboard data", err);
+  //       setLoading(false);
+  //     });
+  // }, []);
+
+  useEffect(() => {
+  const loadDashboard = async () => {
+    try {
+      const userData = await fetchGet("/api/v1/me");
+      setTenant(userData.tenant);
+    } catch (err) {
+      console.error("Failed to load user", err);
+    }
+
+    try {
+      const inventory = await fetchGet(
+        "/api/v1/users/store_owners/product_listings"
+      );
+      setListings(inventory);
+    } catch (err) {
+      console.error("Failed to load inventory", err);
+    }
+
+    try {
+      const categories = await fetchGet("/api/v1/categories");
+      setCategories(categories);
+    } catch (err) {
+      console.error("Failed to load categories", err);
+    }
+
+    try {
+      const audit = await fetchGet(
+        "/api/v1/users/store_owners/analytics"
+      );
+      setAuditData(audit);
+    } catch (err) {
+      console.error("Failed to load analytics", err);
+    }
+
+    setLoading(false);
+  };
+
+  loadDashboard();
+}, []);
 
   // 2. Fetch Products only when Category changes (Matches old new.html.erb logic)
   useEffect(() => {

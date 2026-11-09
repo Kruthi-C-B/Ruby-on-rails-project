@@ -221,7 +221,7 @@ RSpec.describe "Shopping cart checkout", type: :request do
       name: "#{label} store",
       slug: "#{label.gsub(/[^a-zA-Z]/, '')}#{SecureRandom.hex(5).tr('0-9', 'abcdefghij')}"
     )
-    TenantDatabase.provision_new!(tenant)
+    TenantDatabase.provision!(tenant)
     product = Product.create!(
       name: "#{label} product",
       description: "Functional checkout test product",

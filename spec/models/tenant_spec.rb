@@ -23,12 +23,12 @@ RSpec.describe Tenant do
       expect(described_class.new(slug: "teststore")).not_to be_valid
     end
 
-    it "allows slugs containing only upper- and lowercase letters" do
-      expect(described_class.new(slug: "StoreName", user: User.new)).to be_valid
+    it "allows lowercase letters and numbers separated by single hyphens" do
+      expect(described_class.new(slug: "store123-name", user: User.new)).to be_valid
     end
 
-    it "rejects numbers, hyphens, and special characters in slugs" do
-      [ "Store123", "store-name", "store_name", "store.name", "store name" ].each do |slug|
+    it "rejects uppercase letters, repeated or leading hyphens, and special characters in slugs" do
+      [ "Store123", "-store", "store-", "store--name", "store_name", "store.name", "store name" ].each do |slug|
         tenant = described_class.new(slug: slug)
 
         expect(tenant).not_to be_valid, "expected #{slug.inspect} to be invalid"
@@ -49,6 +49,40 @@ RSpec.describe Tenant do
     it "requires persistence before deriving a database name" do
       expect { described_class.new.apartment_tenant_name }
         .to raise_error(ArgumentError, /persisted/)
+    end
+  end
+
+  describe "database credentials" do
+    let(:owner) { User.create!(email: "cred-owner@example.test", password: "password123") }
+    let(:tenant) { described_class.create!(user: owner, name: "CredStore", slug: "credstore") }
+
+    it "derives default database username from the tenant id" do
+      expect(tenant.default_db_username).to eq("tenant_#{tenant.id}_app")
+    end
+
+    it "generates and encrypts database credentials upon demand" do
+      expect(tenant.db_username).to be_nil
+      expect(tenant.db_password).to be_nil
+
+      tenant.ensure_db_credentials!
+      tenant.reload
+
+      expect(tenant.db_username).to eq("tenant_#{tenant.id}_app")
+      expect(tenant.db_password).to be_present
+      expect(tenant.db_password.length).to be >= 32
+    end
+
+    it "allows rotating database passwords without affecting username" do
+      tenant.ensure_db_credentials!
+      original_username = tenant.db_username
+      original_password = tenant.db_password
+
+      tenant.rotate_db_password!("newsecretpassword12345678901234")
+      tenant.reload
+
+      expect(tenant.db_username).to eq(original_username)
+      expect(tenant.db_password).to eq("newsecretpassword12345678901234")
+      expect(tenant.db_password).not_to eq(original_password)
     end
   end
 end

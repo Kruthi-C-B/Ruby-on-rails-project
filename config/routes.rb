@@ -5,7 +5,7 @@ Rails.application.routes.draw do
   get "/localFind/products", to: "catalog#index", as: :products
   get "/localFind/products/:id", to: "catalog#index", as: :product
   get "/localFind/admin/dashboard", to: "admin_dashboard#show"
-  get "/localFind/admin/security", to: redirect("/localFind/admin/dashboard")
+  get "/localFind/admin/security", to: "admin_dashboard#show"
   get "/admin/dashboard", to: redirect("/localFind/admin/dashboard")
   get "/admin/security", to: redirect("/localFind/admin/security")
 

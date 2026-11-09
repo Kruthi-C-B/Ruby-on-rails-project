@@ -21,7 +21,7 @@ RSpec.describe "Shopping cart workflow", type: :request do
       slug: "cartworkflow#{SecureRandom.hex(4).tr('0-9', 'abcdefghij')}",
       address: "10 Market Street"
     )
-    TenantDatabase.provision_new!(@tenant)
+    TenantDatabase.provision!(@tenant)
     @references = @products.map do |product|
       listing = TenantDatabase.switch(@tenant) do
         ProductListing.create!(product_id: product.id, price: "0.03", stock_quantity: 10)

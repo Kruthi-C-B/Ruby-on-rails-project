@@ -4,7 +4,7 @@ module Api
       skip_before_action :require_api_login!
 
       def index
-        products = Product.joins(:listing_references).includes(:category).distinct
+        products = Product.includes(:category).distinct
         products = products.where("products.name LIKE ?", "%#{params[:query]}%") if params[:query].present?
         products = products.where(category_id: params[:category_id]) if params[:category_id].present?
 
@@ -46,10 +46,7 @@ module Api
 
           recommendations = ListingReference.includes(:tenant, :product).where(id: recommended_ids).map do |reference|
             {
-              id: reference.tenant_listing_id,
-              listingReferenceId: reference.id,
               name: reference.product.name,
-              price: reference.price,
               storeName: reference.tenant.name
             }
           end

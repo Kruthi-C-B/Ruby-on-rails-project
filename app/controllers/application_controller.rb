@@ -19,10 +19,9 @@ class ApplicationController < ActionController::Base
   end
 
   def require_login
-    unless logged_in?
-      # Render custom restricted error view directly with 403 status
-      render "errors/restricted", status: :forbidden
-    end
+  unless logged_in?
+    render "errors/restricted", status: :forbidden
+  end
   end
 
   def require_tenant

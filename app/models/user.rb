@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  include LocalFindPramata::AdminRole
+  include LocalFindShared::AdminRole
 
   has_secure_password
   has_one :tenant, dependent: :destroy

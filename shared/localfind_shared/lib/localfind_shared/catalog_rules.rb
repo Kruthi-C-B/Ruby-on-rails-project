@@ -1,6 +1,6 @@
 require "active_support/concern"
 
-module LocalFindPramata
+module LocalFindShared
   module CatalogCategoryRules
     extend ActiveSupport::Concern
 

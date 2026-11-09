@@ -35,7 +35,7 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     post "/api/v1/users/store_owners/tenant", params: {
       tenant: {
         name: "Workflow Store",
-        slug: "workflowstore#{SecureRandom.hex(4).tr('0-9', 'abcdefghij')}",
+        slug: "workflow-store-#{SecureRandom.hex(4)}",
         address: "123 Main Street"
       }
     }
@@ -61,10 +61,10 @@ RSpec.describe "Store owner and public catalog workflow", type: :request do
     reference = @tenant.listing_references.find_by!(tenant_listing_id: listing_id)
 
     patch "/api/v1/users/store_owners/tenant", params: {
-      tenant: { slug: "renamedworkflowstore" }
+      tenant: { slug: "renamed-workflow-store" }
     }
     expect(response).to have_http_status(:ok)
-    expect(@tenant.reload.slug).to eq("renamedworkflowstore")
+    expect(@tenant.reload.slug).to eq("renamed-workflow-store")
     expect(@tenant.apartment_tenant_name).to eq("localfind_tenant_#{@tenant.id}")
     get "/api/v1/users/store_owners/product_listings"
     expect(response).to have_http_status(:ok)

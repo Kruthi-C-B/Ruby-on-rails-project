@@ -56,7 +56,7 @@ store = Tenant.find_or_create_by!(user: owner) do |tenant|
   tenant.slug = "cornerstore"
   tenant.address = "12 Main Street"
 end
-TenantDatabase.provision_new!(store)
+TenantDatabase.provision!(store)
 TenantDatabase.switch(store) do
   [ [ "Wireless Headphones", 59.99, 25 ], [ "Ceramic Coffee Mug", 8.5, 4 ], [ "Almond Milk", 3.25, 0 ] ].each do |name, price, stock|
     ProductListing.find_or_create_by!(product: Product.find_by!(name: name)) do |listing|

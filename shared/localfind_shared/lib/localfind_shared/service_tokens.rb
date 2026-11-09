@@ -1,4 +1,4 @@
-module LocalFindPramata
+module LocalFindShared
   module ServiceTokens
     SERVICES = {
       "admin-dashboard-api" => {

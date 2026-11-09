@@ -1,5 +1,7 @@
-class PurchaseHistory < ApplicationRecord
-  has_paper_trail
+class PurchaseHistory < TenantRecord
+  has_paper_trail versions: {
+  class_name: "TenantVersion"
+}
 
   belongs_to :product_listing
   belongs_to :product

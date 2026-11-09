@@ -1,3 +1,3 @@
 class Product < ApplicationRecord
-  include LocalFindPramata::CatalogProductRules
+  include LocalFindShared::CatalogProductRules
 end

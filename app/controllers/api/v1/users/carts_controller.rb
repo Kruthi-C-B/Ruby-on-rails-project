@@ -1,5 +1,5 @@
 class Api::V1::Users::CartsController < Api::V1::BaseController
-  skip_before_action :verify_authenticity_token
+  # skip_before_action :verify_authenticity_token
 
   def show
     cart = current_user.carts.find_by(status: "pending") || current_user.carts.create!(status: "pending")
@@ -27,6 +27,8 @@ class Api::V1::Users::CartsController < Api::V1::BaseController
   rescue CheckoutService::CheckoutError => error
     render_error(error.message, status: :unprocessable_entity)
   rescue ActiveRecord::RecordInvalid => error
+    render_error(error.message, status: :unprocessable_entity)
+  rescue ActiveRecord::RecordNotFound => error
     render_error(error.message, status: :unprocessable_entity)
   end
 

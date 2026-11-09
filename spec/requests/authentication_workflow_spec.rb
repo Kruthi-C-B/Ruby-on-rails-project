@@ -41,7 +41,7 @@ RSpec.describe "Account authentication workflow", type: :request do
 
     get "/api/v1/me"
     expect(response).to have_http_status(:ok)
-    expect(JSON.parse(response.body)).to eq("logged_in" => true, "is_admin" => false)
+    expect(JSON.parse(response.body)).to eq("logged_in" => true, "is_admin" => false, "tenant" => nil)
 
     get "/localFind/admin/security"
     expect(response).to have_http_status(:forbidden)
@@ -57,7 +57,7 @@ RSpec.describe "Account authentication workflow", type: :request do
     expect(LoginAudit.where(user: @user, status: "success")).to exist
 
     get "/api/v1/me"
-    expect(JSON.parse(response.body)).to eq("logged_in" => true, "is_admin" => false)
+    expect(JSON.parse(response.body)).to eq("logged_in" => true, "is_admin" => false, "tenant" => nil)
   end
 
   it "rejects an invalid password and records the failed login" do
