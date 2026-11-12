@@ -5,35 +5,131 @@ class CheckoutService
     @cart = cart
   end
 
-  def call
-    @cart.with_lock do
-      items = @cart.cart_items.includes(listing_reference: :tenant).to_a
-      raise CheckoutError, "Cart is empty." if items.empty?
+  # def call
+  #   @cart.with_lock do
+  #     items = @cart.cart_items.includes(listing_reference: :tenant).to_a
+  #     raise CheckoutError, "Cart is empty." if items.empty?
 
-      @cart.update!(purchase_reference: SecureRandom.uuid) if @cart.purchase_reference.blank?
-      purchase_reference = @cart.purchase_reference
-      items_by_tenant = items.group_by { |item| item.listing_reference.tenant_id }
-      amounts_by_item = DiscountAllocator.call(items, @cart.discount&.percentage || 0)
+  #     @cart.update!(purchase_reference: SecureRandom.uuid) if @cart.purchase_reference.blank?
+  #     purchase_reference = @cart.purchase_reference
+  #     items_by_tenant = items.group_by { |item| item.listing_reference.tenant_id }
+  #     amounts_by_item = DiscountAllocator.call(items, @cart.discount&.percentage || 0)
 
-      validate_stock!(items_by_tenant, purchase_reference, amounts_by_item)
-      if @cart.status != "pending"
-        raise CheckoutError, "This cart has already been checked out."
-      end
+  #     validate_stock!(items_by_tenant, purchase_reference, amounts_by_item)
+  #     if @cart.status != "pending"
+  #       raise CheckoutError, "This cart has already been checked out."
+  #     end
 
-      if purchases_exist?(items_by_tenant, purchase_reference)
-        @cart.update!(status: "ordered")
-        return purchase_reference
-      end
+  #     if purchases_exist?(items_by_tenant, purchase_reference)
+  #       @cart.update!(status: "ordered")
+  #       return purchase_reference
+  #     end
 
-      create_pending_purchases!(items_by_tenant, purchase_reference, amounts_by_item)
-      complete_purchases!(items_by_tenant, purchase_reference)
-      @cart.update!(status: "ordered")
+  #     create_pending_purchases!(items_by_tenant, purchase_reference, amounts_by_item)
+  #     complete_purchases!(items_by_tenant, purchase_reference)
+  #     @cart.update!(status: "ordered")
 
+  #     purchase_reference
+  #   end
+  # end
+
+def call
+  items, purchase_reference, amounts_by_item = prepare_checkout!
+
+  items_by_tenant = items.group_by { |item| item.listing_reference.tenant_id }
+
+  begin
+    validate_stock!(
+      items_by_tenant,
+      purchase_reference,
+      amounts_by_item
+    )
+
+    create_pending_purchases!(
+      items_by_tenant,
+      purchase_reference,
+      amounts_by_item
+    )
+
+    complete_purchases!(
+      items_by_tenant,
       purchase_reference
-    end
-  end
+    )
 
-  private
+    finalize_checkout!(purchase_reference)
+
+    purchase_reference
+
+  rescue StandardError => original_error
+    begin
+      CheckoutCompensationService.new(
+        purchase_reference,
+        items_by_tenant
+      ).call
+
+      reset_cart_for_retry!
+    rescue StandardError => compensation_error
+      # Record recovery-required state.
+      # Do not pretend that compensation succeeded.
+      Rails.logger.error(
+        "Checkout compensation failed: #{compensation_error.message}"
+      )
+    end
+
+    raise original_error
+  end
+end
+
+private
+
+
+def prepare_checkout!
+  @cart.with_lock do
+    raise CheckoutError, "Cart is already being checked out." unless
+      @cart.status == "pending"
+
+    items = @cart.cart_items
+                 .includes(listing_reference: :tenant)
+                 .to_a
+
+    raise CheckoutError, "Cart is empty." if items.empty?
+
+    purchase_reference = SecureRandom.uuid
+
+    @cart.update!(
+      status: "checking_out",
+      purchase_reference: purchase_reference
+    )
+
+    amounts = DiscountAllocator.call(
+      items,
+      @cart.discount&.percentage || 0
+    )
+
+    [items, purchase_reference, amounts]
+  end
+end
+
+
+def finalize_checkout!(purchase_reference)
+  @cart.with_lock do
+    raise CheckoutError, "Checkout reference changed." unless
+      @cart.purchase_reference == purchase_reference
+
+    @cart.update!(status: "ordered")
+  end
+end
+
+def reset_cart_for_retry!
+  @cart.with_lock do
+    @cart.update!(
+      status: "pending",
+      purchase_reference: nil
+    )
+  end
+end
+
+  
 
   def purchases_exist?(items_by_tenant, purchase_reference)
     items_by_tenant.each_value.all? do |items|

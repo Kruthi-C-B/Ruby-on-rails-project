@@ -20,7 +20,7 @@
 default: &default
   adapter: mysql2
   encoding: utf8mb4
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 1 } %>
   username: <%= db_user %>
   password: <%= db_pass %>
   host: <%= ENV.fetch("DB_HOST", "db") %>
@@ -34,5 +34,18 @@ test:
   database: local_find_test
 
 production:
-  <<: *default
-  database: local_find_production
+  primary: &primary_production
+    <<: *default
+    database: <%= ENV.fetch("LOCALFIND_MAIN_DB_NAME", "local_find_production") %>
+  queue:
+    <<: *primary_production
+    database: <%= ENV.fetch("SOLID_QUEUE_DB_NAME", "local_find_production") %>
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *primary_production
+    database: <%= ENV.fetch("SOLID_CABLE_DB_NAME", "local_find_production") %>
+    migrations_paths: db/cable_migrate
+  cache:
+    <<: *primary_production
+    database: <%= ENV.fetch("SOLID_CACHE_DB_NAME", "local_find_production") %>
+    migrations_paths: db/cache_migrate

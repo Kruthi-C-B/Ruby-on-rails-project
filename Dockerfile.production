@@ -2,10 +2,8 @@
 # check=error=true
 
 # This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t local_find .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name local_find local_find
-
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
+# docker build -f Dockerfile.production -t localfind:production .
+# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> -e LOCALFIND_MAIN_DB_PASSWORD=<password> --name localfind localfind:production
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.3.12
@@ -14,9 +12,9 @@ FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
+# Install base runtime packages (MySQL client replaces sqlite3 for production)
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips default-mysql-client && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -24,25 +22,43 @@ RUN apt-get update -qq && \
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development" \
+    BUNDLE_WITHOUT="development:test" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems
+# Install build packages including MySQL development headers (default-libmysqlclient-dev)
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libvips libyaml-dev pkg-config && \
+    apt-get install --no-install-recommends -y build-essential git libvips libyaml-dev pkg-config default-libmysqlclient-dev && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install application gems
-COPY vendor/* ./vendor/
+# Copy Node.js from official Node image for Shakapacker and MFE compilation
+COPY --from=node:22 /usr/local/bin /usr/local/bin
+COPY --from=node:22 /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node:22 /usr/local/include/node /usr/local/include/node
+
+# Install application gems:
+# IMPORTANT: Copy local shared gem (shared/localfind_shared) BEFORE bundle install so Bundler can resolve it!
+COPY shared/ ./shared/
 COPY Gemfile Gemfile.lock ./
 
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
     bundle exec bootsnap precompile -j 1 --gemfile
+
+# Install root npm dependencies for Shakapacker / React
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Build Microfrontends (Admin Dashboard & Security Logs) and place bundles in public/mfe/
+COPY mfe/ ./mfe/
+RUN cd mfe/admin-dashboard && npm ci && npm run build
+RUN cd mfe/security-logs && npm ci && npm run build
+RUN mkdir -p public/mfe && \
+    cp -r mfe/admin-dashboard/dist/* public/mfe/ && \
+    cp -r mfe/security-logs/dist/* public/mfe/
 
 # Copy application code
 COPY . .
@@ -56,11 +72,8 @@ RUN chmod +x bin/* && \
     sed -i "s/\r$//g" bin/* && \
     sed -i 's/ruby\.exe$/ruby/' bin/*
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
-
-
-
+# Precompiling assets for production with Shakapacker without requiring secret RAILS_MASTER_KEY
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile --trace
 
 # Final stage for app image
 FROM base

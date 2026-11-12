@@ -6,6 +6,8 @@ class Tenant < ApplicationRecord
   belongs_to :user
   has_many :listing_references, dependent: :destroy
 
+  before_validation :strip_slug_whitespace
+
   validates :slug, presence: true, uniqueness: true, format: { with: /\A[a-z0-9]+(?:-[a-z0-9]+)*\z/ }
   validates :db_username, format: { with: /\A[a-zA-Z0-9_]+\z/ }, allow_nil: true
 
@@ -27,5 +29,11 @@ class Tenant < ApplicationRecord
     raise ArgumentError, "Tenant must be persisted before rotating credentials" unless persisted?
 
     update!(db_password: new_password)
+  end
+
+  private
+
+  def strip_slug_whitespace
+    self.slug = slug.strip if slug.is_a?(String)
   end
 end

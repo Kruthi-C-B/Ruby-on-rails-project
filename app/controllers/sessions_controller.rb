@@ -1,5 +1,15 @@
 
 class SessionsController < ApplicationController
+  rate_limit to: 10,
+             within: 3.minutes,
+             by: -> {
+               [
+                 request.remote_ip,
+                 params[:email].to_s.downcase
+               ]
+             },
+             only: :create
+
   def new
   end
 

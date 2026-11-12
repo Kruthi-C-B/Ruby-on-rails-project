@@ -15,28 +15,37 @@ Apartment.configure do |config|
   ]
 
   config.prepend_environment = !Rails.env.production?
+  config.db_migrate_tenants = false
   config.db_migrate_tenant_missing_strategy = :create_tenant
 
   config.tenant_names = lambda do
-    return {} unless ActiveRecord::Base.connected? && ActiveRecord::Base.connection.data_source_exists?("tenants")
+    return {} if ENV["SECRET_KEY_BASE_DUMMY"].present? ||
+                 ARGV.any? { |a| a.include?("assets:precompile") } ||
+                 caller.any? { |c| c.include?("assets:precompile") }
 
-    base_config = ActiveRecord::Base.configurations.configs_for(
-      env_name: Rails.env,
-      name: "primary"
-    )&.configuration_hash || {}
+    begin
+      return {} unless ActiveRecord::Base.connected? && ActiveRecord::Base.connection.data_source_exists?("tenants")
 
-    Tenant.all.to_h do |tenant|
-      tenant_key = tenant.apartment_tenant_name
-      db_name = Apartment::Tenant.environmentify(tenant_key)
-      cfg = base_config.dup.symbolize_keys
-      cfg[:database] = db_name
+      base_config = ActiveRecord::Base.configurations.configs_for(
+        env_name: Rails.env,
+        name: "primary"
+      )&.configuration_hash || {}
 
-      if tenant.db_username.present? && tenant.db_password.present?
-        cfg[:username] = tenant.db_username
-        cfg[:password] = tenant.db_password
+      Tenant.all.to_h do |tenant|
+        tenant_key = tenant.apartment_tenant_name
+        db_name = Apartment::Tenant.environmentify(tenant_key)
+        cfg = base_config.dup.symbolize_keys
+        cfg[:database] = db_name
+
+        if tenant.db_username.present? && tenant.db_password.present?
+          cfg[:username] = tenant.db_username
+          cfg[:password] = tenant.db_password
+        end
+
+        [ tenant_key, cfg ]
       end
-
-      [ tenant_key, cfg ]
+    rescue ActiveRecord::ActiveRecordError, Mysql2::Error
+      {}
     end
   end
 end

@@ -1,49 +1,99 @@
+require "concurrent/map"
+
 class TenantDatabase
   OWNERSHIP_TABLE = "localfind_tenant_ownership"
   MIGRATIONS_TABLE = "tenant_schema_migrations"
 
+  VERIFIED_TENANTS = Concurrent::Map.new
+  VERIFICATION_CACHE_TTL = 5.minutes
+
   class Error < StandardError; end
   class OwnershipError < Error; end
 
+  # --------------------------------------------------
+  # TENANT OWNERSHIP MARKER
+  # --------------------------------------------------
+
   def self.create_ownership_marker!(database_name, tenant_id)
-  database = quote_identifier(database_name)
-  table = quote_identifier(OWNERSHIP_TABLE)
+    database = quote_identifier(database_name)
+    table = quote_identifier(OWNERSHIP_TABLE)
 
-  with_provisioner_client do |client|
-    client.query(<<~SQL)
-      CREATE TABLE #{database}.#{table} (
-        tenant_id BIGINT NOT NULL PRIMARY KEY,
-        created_at DATETIME NOT NULL
-      ) ENGINE=InnoDB
-    SQL
+    with_provisioner_client do |client|
+      client.query(<<~SQL)
+        CREATE TABLE #{database}.#{table} (
+          tenant_id BIGINT NOT NULL PRIMARY KEY,
+          created_at DATETIME NOT NULL
+        ) ENGINE=InnoDB
+      SQL
 
-    client.query(<<~SQL)
-      INSERT INTO #{database}.#{table} (tenant_id, created_at)
-      VALUES (#{Integer(tenant_id)}, UTC_TIMESTAMP())
-    SQL
+      client.query(<<~SQL)
+        INSERT INTO #{database}.#{table} (tenant_id, created_at)
+        VALUES (#{Integer(tenant_id)}, UTC_TIMESTAMP())
+      SQL
+    end
+
+    invalidate_verification!(tenant_id)
   end
-end
 
-  # Switch to a tenant database only after verifying ownership.
+  # --------------------------------------------------
+  # OWNERSHIP VERIFICATION WITH CACHE
+  # --------------------------------------------------
+
+  def self.verify_tenant!(tenant)
+    raise ArgumentError, "Tenant is required" unless tenant
+
+    database_name = database_name_for(tenant)
+    cache_key = [tenant.id, database_name]
+
+    verified_at = VERIFIED_TENANTS[cache_key]
+
+    if verified_at &&
+       Process.clock_gettime(Process::CLOCK_MONOTONIC) - verified_at <
+         VERIFICATION_CACHE_TTL.to_f
+      return true
+    end
+
+    verify_ownership!(tenant, database_name)
+
+    VERIFIED_TENANTS[cache_key] =
+      Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    true
+  end
+
+  def self.invalidate_verification!(tenant_or_id)
+    tenant_id = tenant_or_id.respond_to?(:id) ?
+      tenant_or_id.id : tenant_or_id
+
+    VERIFIED_TENANTS.each_key do |key|
+      VERIFIED_TENANTS.delete(key) if key.first == tenant_id
+    end
+  end
+
+  # --------------------------------------------------
+  # TENANT SWITCHING
+  # --------------------------------------------------
+
   def self.switch(tenant, &block)
-  raise ArgumentError, "Tenant is required" unless tenant
-  raise ArgumentError, "Block is required" unless block
+    raise ArgumentError, "Tenant is required" unless tenant
+    raise ArgumentError, "Block is required" unless block
 
-  database_name = database_name_for(tenant)
+    verify_tenant!(tenant)
 
-  verify_database_exists!(database_name)
-  verify_ownership!(tenant, database_name)
+    previous_tenant = CurrentTenantContext.tenant
 
-  previous_tenant = CurrentTenantContext.tenant
-
-  CurrentTenantContext.set(tenant: tenant) do
-    TenantConnectionManager.with_tenant(tenant, &block)
-  end
+    CurrentTenantContext.set(tenant: tenant) do
+      TenantConnectionManager.with_tenant(tenant, &block)
+    end
   ensure
-  CurrentTenantContext.tenant = previous_tenant if defined?(previous_tenant)
+    CurrentTenantContext.tenant = previous_tenant if
+      defined?(previous_tenant)
   end
 
-  # Create a tenant database and initialize its schema.
+  # --------------------------------------------------
+  # DATABASE PROVISIONING
+  # --------------------------------------------------
+
   def self.provision!(tenant)
     tenant.with_lock do
       tenant.reload
@@ -53,15 +103,21 @@ end
       if database_exists?(database_name)
         verify_ownership!(tenant, database_name)
 
-        tenant.ensure_db_credentials! if tenant.respond_to?(:ensure_db_credentials!)
+        tenant.ensure_db_credentials! if
+          tenant.respond_to?(:ensure_db_credentials!)
 
-        provision_mysql_account!(tenant, database_name) if tenant.db_username.present?
+        provision_mysql_account!(tenant, database_name) if
+          tenant.db_username.present?
 
         verify_tenant_access!(tenant, database_name)
+
+        invalidate_verification!(tenant)
+
         return :existing
       end
 
-      tenant.ensure_db_credentials! if tenant.respond_to?(:ensure_db_credentials!)
+      tenant.ensure_db_credentials! if
+        tenant.respond_to?(:ensure_db_credentials!)
 
       created_database = false
 
@@ -76,28 +132,35 @@ end
           tenant_id: tenant.id
         )
 
-        provision_mysql_account!(tenant, database_name) if tenant.db_username.present?
+        provision_mysql_account!(tenant, database_name) if
+          tenant.db_username.present?
 
         verify_tenant_access!(tenant, database_name)
 
+        invalidate_verification!(tenant)
+
         :created
       rescue StandardError => error
-        # Remove the tenant account if it was created or partially created.
         deprovision_mysql_account!(tenant)
 
-        # Drop only a database created by this provisioning attempt.
         drop_database!(database_name) if created_database
+
+        invalidate_verification!(tenant)
 
         raise error
       end
     end
   end
 
-  # Use the privileged MySQL account only for provisioning operations.
+  # --------------------------------------------------
+  # PROVISIONER CONNECTION
+  # --------------------------------------------------
+
   def self.with_provisioner_client
     host = ENV.fetch("DB_PROVISIONER_HOST", ENV.fetch("DB_HOST", "db"))
     port = ENV.fetch("DB_PORT", "3306").to_i
     username = ENV.fetch("DB_PROVISIONER_USERNAME", "root")
+
     password = ENV.fetch(
       "DB_PROVISIONER_PASSWORD",
       ENV.fetch("MYSQL_ROOT_PASSWORD", "password")
@@ -121,7 +184,10 @@ end
       ENV["MYSQL_ROOT_PASSWORD"].present?
   end
 
-  # Create an empty database. Do not import the main Rails schema.
+  # --------------------------------------------------
+  # DATABASE CREATION AND DELETION
+  # --------------------------------------------------
+
   def self.create_empty_tenant_database!(database_name)
     identifier = quote_identifier(database_name)
 
@@ -141,15 +207,17 @@ end
     end
   end
 
-  # Create or refresh the tenant's restricted application account.
+  # --------------------------------------------------
+  # TENANT MYSQL ACCOUNT
+  # --------------------------------------------------
+
   def self.provision_mysql_account!(tenant, database_name)
-    return unless tenant.db_username.present? && tenant.db_password.present?
+    return unless tenant.db_username.present? &&
+                  tenant.db_password.present?
 
     user_sql = LocalFindShared::DatabaseAccess.quote_account(
       tenant.db_username
     )
-
-    escaped_password = nil
 
     with_provisioner_client do |client|
       escaped_password = client.escape(tenant.db_password)
@@ -176,9 +244,9 @@ end
     end
   end
 
-  # Remove the tenant's MySQL account during provisioning rollback.
   def self.deprovision_mysql_account!(tenant)
-    return unless tenant.respond_to?(:db_username) && tenant.db_username.present?
+    return unless tenant.respond_to?(:db_username) &&
+                  tenant.db_username.present?
 
     user_sql = LocalFindShared::DatabaseAccess.quote_account(
       tenant.db_username
@@ -193,7 +261,10 @@ end
     )
   end
 
-  # Rotate the tenant's database password.
+  # --------------------------------------------------
+  # CREDENTIAL ROTATION
+  # --------------------------------------------------
+
   def self.rotate_credentials!(tenant, new_password = SecureRandom.base58(32))
     tenant.with_lock do
       tenant.reload
@@ -211,14 +282,31 @@ end
       end
 
       tenant.rotate_db_password!(new_password)
+
+      invalidate_verification!(tenant)
+
+      # Important:
+      # TenantConnectionManager must also discard old
+      # connections after credential rotation.
+      TenantConnectionManager.disconnect_tenant!(tenant) if
+        TenantConnectionManager.respond_to?(:disconnect_tenant!)
     end
   end
 
+  # --------------------------------------------------
+  # DATABASE NAME
+  # --------------------------------------------------
+
   def self.database_name_for(tenant)
-    Apartment::Tenant.environmentify(tenant.apartment_tenant_name)
+    Apartment::Tenant.environmentify(
+      tenant.apartment_tenant_name
+    )
   end
 
-  # Check database existence using the provisioner, not the app account.
+  # --------------------------------------------------
+  # DATABASE EXISTENCE
+  # --------------------------------------------------
+
   def self.database_exists?(database_name)
     with_provisioner_client do |client|
       result = client.query(
@@ -236,18 +324,20 @@ end
     raise Error, "Tenant database #{database_name} does not exist"
   end
 
-  # Check that the database has exactly the expected owner.
+  # --------------------------------------------------
+  # OWNERSHIP VERIFICATION
+  # --------------------------------------------------
+
   def self.verify_ownership!(tenant, database_name)
-    verify_database_exists!(database_name)
-
     with_provisioner_client do |client|
-      tables = client.query(
-        "SHOW TABLES FROM #{quote_identifier(database_name)}"
-      ).map { |row| row.values.first }
+      database_result = client.query(
+        "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA " \
+        "WHERE SCHEMA_NAME = '#{client.escape(database_name)}'"
+      )
 
-      unless tables.include?(OWNERSHIP_TABLE)
-        raise OwnershipError,
-          "Database #{database_name} has no ownership marker"
+      unless database_result.count.positive?
+        raise Error,
+          "Tenant database #{database_name} does not exist"
       end
 
       result = client.query(
@@ -257,7 +347,7 @@ end
 
       owners = result.map { |row| row["tenant_id"].to_i }
 
-      unless owners == [ tenant.id ]
+      unless owners == [tenant.id]
         raise OwnershipError,
           "Database #{database_name} is marked for tenant " \
           "#{owners.join(', ')}, not tenant #{tenant.id}"
@@ -265,13 +355,18 @@ end
     end
 
     true
+  rescue Mysql2::Error => error
+    raise OwnershipError,
+      "Unable to verify ownership of tenant database: #{error.message}"
   end
 
   def self.verify_tenant_access!(tenant, database_name)
-    verify_database_exists!(database_name)
     verify_ownership!(tenant, database_name)
-    true
   end
+
+  # --------------------------------------------------
+  # SQL IDENTIFIER QUOTING
+  # --------------------------------------------------
 
   def self.quote_identifier(value)
     raise ArgumentError, "Invalid database identifier" unless

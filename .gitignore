@@ -4,6 +4,8 @@
 # belong in git's global ignore instead:
 # `$XDG_CONFIG_HOME/git/ignore` or `~/.config/git/ignore`
 
+/config/credentials/internal/admin_dashboard_private.pem
+
 # Ignore bundler config.
 /.bundle
 

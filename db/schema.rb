@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_05_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_10_120000) do
   create_table "cart_items", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.bigint "cart_id", null: false
     t.integer "quantity"
@@ -42,10 +42,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_120000) do
   end
 
   create_table "discounts", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.string "code"
-    t.decimal "percentage", precision: 5, scale: 2
+    t.string "code", null: false
+    t.decimal "percentage", precision: 5, scale: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_discounts_on_code", unique: true
   end
 
   create_table "listing_references", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -134,6 +135,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_120000) do
     t.string "database_migration_source"
     t.string "db_username"
     t.string "db_password"
+    t.string "provisioning_status", default: "pending", null: false
+    t.text "provisioning_error"
+    t.datetime "provisioning_started_at"
+    t.datetime "provisioned_at"
+    t.integer "provisioning_attempts", default: 0, null: false
+    t.index ["provisioning_status"], name: "index_tenants_on_provisioning_status"
     t.index ["slug"], name: "index_tenants_on_slug", unique: true
     t.index ["user_id"], name: "index_tenants_on_user_id", unique: true
   end

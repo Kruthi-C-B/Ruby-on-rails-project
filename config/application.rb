@@ -6,6 +6,10 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Disable Apartment's automatic tenant migration integration.
+# Normal rails db:migrate should migrate only the shared database.
+Apartment.db_migrate_tenants = false
+
 module LocalFind
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
@@ -32,6 +36,21 @@ module LocalFind
 
     # Shakapacker compiles our JSX, so react-rails must not look for Sprockets
     config.react.sprockets_strategy = false
+
+    # Gracefully handle missing database during Docker image build / assets:precompile
+    initializer "apartment.safe_init", before: "apartment.init" do
+      if defined?(Apartment::Tenant)
+        Apartment::Tenant.singleton_class.prepend(
+          Module.new do
+            def init
+              super
+            rescue ActiveRecord::DatabaseConnectionError, Mysql2::Error => e
+              warn "Skipping Apartment initialization (database connection unavailable): #{e.message}"
+            end
+          end
+        )
+      end
+    end
 
     # Configuration for the application, engines, and railties goes here.
     #

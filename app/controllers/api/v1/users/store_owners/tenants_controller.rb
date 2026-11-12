@@ -7,6 +7,10 @@ module Api
           # skip_before_action :verify_authenticity_token
 
           def create
+            if current_user.tenant
+                return render_error("Store already exists", status: :conflict)
+            end
+
             tenant = current_user.build_tenant(create_tenant_params)
 
             if tenant.save

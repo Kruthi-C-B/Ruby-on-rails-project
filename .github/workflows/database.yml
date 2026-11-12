@@ -1,0 +1,38 @@
+<%
+  is_migrating = ENV["DB_MIGRATION_USERNAME"].present? ||
+                 caller.any? { |c| c.include?("rake") || c.include?("migrate") || c.include?("schema") } ||
+                 $PROGRAM_NAME.to_s.include?("rake") ||
+                 ARGV.any? { |arg| arg.to_s =~ /^(db:|tenant_databases:)/ }
+
+  db_user = if is_migrating
+    ENV["DB_MIGRATION_USERNAME"] || ENV["DB_PROVISIONER_USERNAME"] || "root"
+  else
+    ENV.fetch("LOCALFIND_MAIN_DB_USERNAME", "localfind_main")
+  end
+
+  db_pass = if is_migrating
+    ENV["DB_MIGRATION_PASSWORD"] || ENV["DB_PROVISIONER_PASSWORD"] || ENV["MYSQL_ROOT_PASSWORD"] || "password"
+  else
+    ENV.fetch("LOCALFIND_MAIN_DB_PASSWORD")
+  end
+%>
+
+default: &default
+  adapter: mysql2
+  encoding: utf8mb4
+  pool: <%= ENV.fetch(".github/workflows") { 1 } %>
+  username: <%= db_user %>
+  password: <%= db_pass %>
+  host: <%= ENV.fetch("DB_HOST", "db") %>
+
+development:
+  <<: *default
+  database: local_find_development
+
+test:
+  <<: *default
+  database: local_find_test
+
+production:
+  <<: *default
+  database: local_find_production

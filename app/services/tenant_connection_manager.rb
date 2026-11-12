@@ -1,3 +1,5 @@
+REGISTRATION_MUTEX = Mutex.new
+
 class TenantConnectionManager
   ROLE = :writing
 
@@ -19,6 +21,7 @@ class TenantConnectionManager
     end
 
     def register_tenant_connection!(tenant, shard = shard_name(tenant))
+      REGISTRATION_MUTEX.synchronize do
       return if registered?(shard)
 
       config = ActiveRecord::Base.connection_db_config.configuration_hash.deep_dup
@@ -47,6 +50,7 @@ class TenantConnectionManager
   :@shard_keys,
   (TenantRecord.shard_keys + [ shard ]).uniq
 )
+      end
     end
 
     def registered?(shard)
